@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import { ArgusLogo } from "@/components/ArgusLogo";
 import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -9,8 +10,8 @@ export async function Navbar() {
   return (
     <header className="topbar">
       <div className="topbar-in">
-        <Link href="/" className="tb-word">
-          ARGUS
+        <Link href="/" aria-label="Argus" style={{ display: "flex", alignItems: "center" }}>
+          <ArgusLogo />
         </Link>
         <span className="tb-label">
           <span className="pulse" />
