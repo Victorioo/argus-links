@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Navbar } from "@/components/Navbar";
@@ -13,6 +14,9 @@ export default async function NewReportPage() {
     <>
       <Navbar />
       <main className="wrap">
+        <Link href="/" className="btn btn-quiet btn-sm" style={{ marginTop: 24 }}>
+          ← Volver
+        </Link>
         <section className="hero">
           <span className="eyebrow">Herramienta interna · Equipo Argus</span>
           <h1>
