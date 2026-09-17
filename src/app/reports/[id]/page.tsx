@@ -20,6 +20,13 @@ export default async function ReportDetailPage({
     notFound();
   }
 
+  const comments = report.allowComments
+    ? await prisma.comment.findMany({
+        where: { reportId: report.id },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
   return (
     <>
       <Navbar />
@@ -33,6 +40,14 @@ export default async function ReportDetailPage({
           initialTitle={report.title}
           initialDescription={report.description ?? ""}
           initialSlug={report.slug}
+          initialAllowComments={report.allowComments}
+          initialComments={comments.map((c) => ({
+            id: c.id,
+            selector: c.selector,
+            authorName: c.authorName,
+            text: c.text,
+            createdAt: c.createdAt.toISOString(),
+          }))}
         />
       </main>
     </>

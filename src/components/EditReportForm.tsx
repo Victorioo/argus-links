@@ -4,11 +4,21 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 
+export type CommentItem = {
+  id: string;
+  selector: string;
+  authorName: string;
+  text: string;
+  createdAt: string;
+};
+
 type Props = {
   id: string;
   initialTitle: string;
   initialDescription: string;
   initialSlug: string;
+  initialAllowComments: boolean;
+  initialComments: CommentItem[];
 };
 
 function formatSize(bytes: number) {
@@ -17,13 +27,22 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export function EditReportForm({ id, initialTitle, initialDescription, initialSlug }: Props) {
+export function EditReportForm({
+  id,
+  initialTitle,
+  initialDescription,
+  initialSlug,
+  initialAllowComments,
+  initialComments,
+}: Props) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [slug, setSlug] = useState(initialSlug);
+  const [allowComments, setAllowComments] = useState(initialAllowComments);
+  const [comments, setComments] = useState(initialComments);
   const [newHtml, setNewHtml] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileSize, setFileSize] = useState(0);
@@ -32,6 +51,16 @@ export function EditReportForm({ id, initialTitle, initialDescription, initialSl
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+
+  async function handleDeleteComment(commentId: string) {
+    setDeletingCommentId(commentId);
+    const res = await fetch(`/api/comments/${slug}/${commentId}`, { method: "DELETE" });
+    setDeletingCommentId(null);
+    if (res.ok) {
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    }
+  }
 
   async function handleFile(file: File) {
     const text = await file.text();
@@ -45,7 +74,7 @@ export function EditReportForm({ id, initialTitle, initialDescription, initialSl
     setError(null);
     setPending(true);
 
-    const body: Record<string, string> = { title, description };
+    const body: Record<string, string | boolean> = { title, description, allowComments };
     if (slug !== initialSlug) body.slug = slug;
     if (newHtml) body.html = newHtml;
 
@@ -142,6 +171,15 @@ export function EditReportForm({ id, initialTitle, initialDescription, initialSl
           )}
         </div>
 
+        <label className="replace" style={{ marginTop: 14 }}>
+          <input
+            type="checkbox"
+            checked={allowComments}
+            onChange={(e) => setAllowComments(e.target.checked)}
+          />
+          Permitir comentarios (cualquiera con el link podrá comentar sobre el reporte)
+        </label>
+
         <div style={{ marginTop: 20 }}>
           {fileName ? (
             <div className="file-pill">
@@ -221,6 +259,41 @@ export function EditReportForm({ id, initialTitle, initialDescription, initialSl
           </button>
         </div>
       </form>
+
+      {initialAllowComments && (
+        <div style={{ marginTop: 32, borderTop: "1px solid var(--line)", paddingTop: 22 }}>
+          <h2 style={{ marginBottom: 14 }}>Comentarios ({comments.length})</h2>
+          {comments.length === 0 ? (
+            <div className="empty">Todavía no recibiste comentarios en este reporte.</div>
+          ) : (
+            <div className="rows">
+              {comments.map((c) => (
+                <div key={c.id} className="row" style={{ gridTemplateColumns: "1fr auto" }}>
+                  <div>
+                    <div className="client" style={{ fontSize: "0.9rem" }}>
+                      {c.authorName}
+                    </div>
+                    <div className="desc">{c.text}</div>
+                    <div className="meta">
+                      <span>{new Date(c.createdAt).toLocaleString("es-AR")}</span>
+                    </div>
+                  </div>
+                  <div className="btns">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteComment(c.id)}
+                      disabled={deletingCommentId === c.id}
+                      className="btn btn-danger btn-sm"
+                    >
+                      {deletingCommentId === c.id ? "Borrando..." : "Borrar"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }

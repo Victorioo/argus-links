@@ -11,6 +11,7 @@ const updateSchema = z.object({
   slug: z.string().trim().optional(),
   description: z.string().trim().max(500).optional(),
   html: z.string().min(1).optional(),
+  allowComments: z.boolean().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -40,11 +41,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     description?: string | null;
     html?: string;
     sizeBytes?: number;
+    allowComments?: boolean;
     updatedById: string;
   } = { updatedById: session.user.id };
 
   if (parsed.data.title !== undefined) data.title = parsed.data.title;
   if (parsed.data.description !== undefined) data.description = parsed.data.description || null;
+  if (parsed.data.allowComments !== undefined) data.allowComments = parsed.data.allowComments;
 
   if (parsed.data.html !== undefined) {
     const sizeBytes = Buffer.byteLength(parsed.data.html, "utf8");

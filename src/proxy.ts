@@ -9,7 +9,8 @@ export default auth((req) => {
     pathname === "/register" ||
     pathname.startsWith("/r/") ||
     pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/register");
+    pathname.startsWith("/api/register") ||
+    pathname.startsWith("/api/comments");
 
   if (!isLoggedIn && !isPublic) {
     const loginUrl = new URL("/login", req.nextUrl.origin);

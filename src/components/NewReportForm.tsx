@@ -34,6 +34,7 @@ export function NewReportForm() {
   const [fileSize, setFileSize] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [allowComments, setAllowComments] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [published, setPublished] = useState<Published | null>(null);
@@ -63,7 +64,13 @@ export function NewReportForm() {
     const res = await fetch("/api/reports", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, html, slug: slugOverride || undefined }),
+      body: JSON.stringify({
+        title,
+        description,
+        html,
+        slug: slugOverride || undefined,
+        allowComments,
+      }),
     });
     const data = await res.json().catch(() => ({}));
     setPending(false);
@@ -236,6 +243,15 @@ export function NewReportForm() {
           </div>
           <div className="hint">Solo minúsculas, números y guiones.</div>
         </div>
+
+        <label className="replace" style={{ marginTop: 14 }}>
+          <input
+            type="checkbox"
+            checked={allowComments}
+            onChange={(e) => setAllowComments(e.target.checked)}
+          />
+          Permitir comentarios (cualquiera con el link podrá comentar sobre el reporte)
+        </label>
 
         {html && (
           <div style={{ marginTop: 14 }}>

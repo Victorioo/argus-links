@@ -11,6 +11,7 @@ const createSchema = z.object({
   slug: z.string().trim().optional(),
   description: z.string().trim().max(500).optional(),
   html: z.string().min(1, "El HTML no puede estar vacío"),
+  allowComments: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { title, description, html } = parsed.data;
+  const { title, description, html, allowComments } = parsed.data;
   const sizeBytes = Buffer.byteLength(html, "utf8");
   if (sizeBytes > MAX_HTML_BYTES) {
     return NextResponse.json(
@@ -55,6 +56,7 @@ export async function POST(req: Request) {
       description: description || null,
       html,
       sizeBytes,
+      allowComments: allowComments ?? false,
       createdById: session.user.id,
     },
   });

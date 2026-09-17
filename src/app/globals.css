@@ -482,6 +482,8 @@ h2 {
 .hint.ok { color: var(--teal); }
 .hint.warn { color: var(--gold); }
 .hint.bad { color: var(--pink); }
+.replace { display: inline-flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--text-dim); cursor: pointer; }
+.replace input { accent-color: var(--violet-500); width: 16px; height: 16px; }
 
 .actions { display: flex; align-items: center; gap: 16px; margin-top: 22px; flex-wrap: wrap; }
 .err {
