@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { VisibilityControl, type Visibility } from "@/components/VisibilityControl";
 
 export type CommentItem = {
   id: string;
@@ -19,6 +20,9 @@ type Props = {
   initialSlug: string;
   initialAllowComments: boolean;
   initialComments: CommentItem[];
+  initialVisibility: Visibility;
+  initialHasPassword: boolean;
+  initialViewerIds: string[];
 };
 
 function formatSize(bytes: number) {
@@ -34,6 +38,9 @@ export function EditReportForm({
   initialSlug,
   initialAllowComments,
   initialComments,
+  initialVisibility,
+  initialHasPassword,
+  initialViewerIds,
 }: Props) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,6 +49,9 @@ export function EditReportForm({
   const [description, setDescription] = useState(initialDescription);
   const [slug, setSlug] = useState(initialSlug);
   const [allowComments, setAllowComments] = useState(initialAllowComments);
+  const [visibility, setVisibility] = useState<Visibility>(initialVisibility);
+  const [password, setPassword] = useState("");
+  const [viewerIds, setViewerIds] = useState<string[]>(initialViewerIds);
   const [comments, setComments] = useState(initialComments);
   const [newHtml, setNewHtml] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -72,11 +82,24 @@ export function EditReportForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (visibility === "PASSWORD" && !initialHasPassword && !password.trim()) {
+      setError("Ingresá una contraseña de acceso");
+      return;
+    }
+
     setPending(true);
 
-    const body: Record<string, string | boolean> = { title, description, allowComments };
+    const body: Record<string, string | boolean | string[]> = {
+      title,
+      description,
+      allowComments,
+      visibility,
+    };
     if (slug !== initialSlug) body.slug = slug;
     if (newHtml) body.html = newHtml;
+    if (visibility === "PASSWORD" && password.trim()) body.password = password;
+    if (visibility === "RESTRICTED") body.viewerIds = viewerIds;
 
     const res = await fetch(`/api/reports/${id}`, {
       method: "PATCH",
@@ -179,6 +202,16 @@ export function EditReportForm({
           />
           Permitir comentarios (cualquiera con el link podrá comentar sobre el reporte)
         </label>
+
+        <VisibilityControl
+          visibility={visibility}
+          onVisibilityChange={setVisibility}
+          password={password}
+          onPasswordChange={setPassword}
+          hasExistingPassword={initialHasPassword}
+          viewerIds={viewerIds}
+          onViewerIdsChange={setViewerIds}
+        />
 
         <div style={{ marginTop: 20 }}>
           {fileName ? (

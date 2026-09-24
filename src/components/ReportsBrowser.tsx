@@ -14,7 +14,14 @@ export type ReportListItem = {
   updatedAt: string;
   createdByName: string;
   updatedByName: string | null;
+  visibility: "PUBLIC" | "PASSWORD" | "RESTRICTED";
 };
+
+function visibilityLabel(v: ReportListItem["visibility"]) {
+  if (v === "PASSWORD") return "🔒 Con contraseña";
+  if (v === "RESTRICTED") return "👥 Restringido";
+  return null;
+}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("es-AR", {
@@ -74,6 +81,11 @@ export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
                 <a href={`/r/${r.slug}`} target="_blank" rel="noopener noreferrer" className="client">
                   {r.title}
                 </a>
+                {visibilityLabel(r.visibility) && (
+                  <span className="chip" style={{ marginLeft: 8 }}>
+                    {visibilityLabel(r.visibility)}
+                  </span>
+                )}
                 {r.description && <div className="desc">{r.description}</div>}
                 <a href={`/r/${r.slug}`} target="_blank" rel="noopener noreferrer" className="u">
                   /r/{r.slug}

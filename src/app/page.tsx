@@ -28,6 +28,7 @@ export default async function DashboardPage() {
     updatedAt: r.updatedAt.toISOString(),
     createdByName: r.createdBy.name,
     updatedByName: r.updatedBy?.name ?? null,
+    visibility: r.visibility,
   }));
 
   return (

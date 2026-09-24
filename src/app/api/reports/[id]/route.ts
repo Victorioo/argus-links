@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -12,6 +13,9 @@ const updateSchema = z.object({
   description: z.string().trim().max(500).optional(),
   html: z.string().min(1).optional(),
   allowComments: z.boolean().optional(),
+  visibility: z.enum(["PUBLIC", "PASSWORD", "RESTRICTED"]).optional(),
+  password: z.string().max(200).optional(),
+  viewerIds: z.array(z.string()).optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -42,12 +46,30 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     html?: string;
     sizeBytes?: number;
     allowComments?: boolean;
+    visibility?: "PUBLIC" | "PASSWORD" | "RESTRICTED";
+    passwordHash?: string | null;
     updatedById: string;
   } = { updatedById: session.user.id };
 
   if (parsed.data.title !== undefined) data.title = parsed.data.title;
   if (parsed.data.description !== undefined) data.description = parsed.data.description || null;
   if (parsed.data.allowComments !== undefined) data.allowComments = parsed.data.allowComments;
+
+  if (parsed.data.visibility !== undefined) {
+    const visibility = parsed.data.visibility;
+    data.visibility = visibility;
+
+    if (visibility === "PASSWORD") {
+      if (parsed.data.password?.trim()) {
+        data.passwordHash = await bcrypt.hash(parsed.data.password, 12);
+      } else if (existing.visibility !== "PASSWORD" || !existing.passwordHash) {
+        return NextResponse.json({ error: "Ingresá una contraseña de acceso" }, { status: 400 });
+      }
+      // otherwise keep the existing passwordHash untouched
+    } else {
+      data.passwordHash = null;
+    }
+  }
 
   if (parsed.data.html !== undefined) {
     const sizeBytes = Buffer.byteLength(parsed.data.html, "utf8");
@@ -75,7 +97,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
-  const report = await prisma.report.update({ where: { id }, data });
+  const viewerIds = parsed.data.viewerIds;
+  const report = await prisma.$transaction(async (tx) => {
+    const updated = await tx.report.update({ where: { id }, data });
+    if (parsed.data.visibility === "RESTRICTED" && viewerIds !== undefined) {
+      await tx.reportViewer.deleteMany({ where: { reportId: id } });
+      if (viewerIds.length) {
+        await tx.reportViewer.createMany({
+          data: viewerIds.map((userId) => ({ reportId: id, userId })),
+          skipDuplicates: true,
+        });
+      }
+    } else if (parsed.data.visibility !== undefined && parsed.data.visibility !== "RESTRICTED") {
+      await tx.reportViewer.deleteMany({ where: { reportId: id } });
+    }
+    return updated;
+  });
+
   return NextResponse.json({ id: report.id, slug: report.slug });
 }
 

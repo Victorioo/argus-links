@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { VisibilityControl, type Visibility } from "@/components/VisibilityControl";
 
 function previewSlug(input: string): string {
   return input
@@ -35,6 +36,9 @@ export function NewReportForm() {
   const [dragOver, setDragOver] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [allowComments, setAllowComments] = useState(false);
+  const [visibility, setVisibility] = useState<Visibility>("PUBLIC");
+  const [password, setPassword] = useState("");
+  const [viewerIds, setViewerIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [published, setPublished] = useState<Published | null>(null);
@@ -60,6 +64,11 @@ export function NewReportForm() {
       return;
     }
 
+    if (visibility === "PASSWORD" && !password.trim()) {
+      setError("Ingresá una contraseña de acceso");
+      return;
+    }
+
     setPending(true);
     const res = await fetch("/api/reports", {
       method: "POST",
@@ -70,6 +79,9 @@ export function NewReportForm() {
         html,
         slug: slugOverride || undefined,
         allowComments,
+        visibility,
+        password: visibility === "PASSWORD" ? password : undefined,
+        viewerIds: visibility === "RESTRICTED" ? viewerIds : undefined,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -92,6 +104,10 @@ export function NewReportForm() {
     setFileSize(0);
     setShowPreview(false);
     setPublished(null);
+    setAllowComments(false);
+    setVisibility("PUBLIC");
+    setPassword("");
+    setViewerIds([]);
   }
 
   if (published) {
@@ -252,6 +268,15 @@ export function NewReportForm() {
           />
           Permitir comentarios (cualquiera con el link podrá comentar sobre el reporte)
         </label>
+
+        <VisibilityControl
+          visibility={visibility}
+          onVisibilityChange={setVisibility}
+          password={password}
+          onPasswordChange={setPassword}
+          viewerIds={viewerIds}
+          onViewerIdsChange={setViewerIds}
+        />
 
         {html && (
           <div style={{ marginTop: 14 }}>

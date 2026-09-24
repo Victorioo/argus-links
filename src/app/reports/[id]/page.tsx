@@ -15,7 +15,10 @@ export default async function ReportDetailPage({
   }
 
   const { id } = await params;
-  const report = await prisma.report.findUnique({ where: { id } });
+  const report = await prisma.report.findUnique({
+    where: { id },
+    include: { allowedViewers: { select: { userId: true } } },
+  });
   if (!report) {
     notFound();
   }
@@ -41,6 +44,9 @@ export default async function ReportDetailPage({
           initialDescription={report.description ?? ""}
           initialSlug={report.slug}
           initialAllowComments={report.allowComments}
+          initialVisibility={report.visibility}
+          initialHasPassword={!!report.passwordHash}
+          initialViewerIds={report.allowedViewers.map((v) => v.userId)}
           initialComments={comments.map((c) => ({
             id: c.id,
             selector: c.selector,
