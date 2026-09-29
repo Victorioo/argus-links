@@ -47,6 +47,21 @@ model Report {
 
   comments       Comment[]
   allowedViewers ReportViewer[]
+  assets         ReportAsset[]
+}
+
+model ReportAsset {
+  id          String   @id @default(cuid())
+  path        String
+  blobUrl     String
+  contentType String
+  sizeBytes   Int
+  createdAt   DateTime @default(now())
+
+  reportId String
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, path])
 }
 
 model ReportViewer {

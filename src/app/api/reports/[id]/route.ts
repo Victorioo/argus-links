@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { del } from "@vercel/blob";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { auth } from "@/auth";
@@ -124,9 +125,16 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
-  const existing = await prisma.report.findUnique({ where: { id } });
+  const existing = await prisma.report.findUnique({
+    where: { id },
+    include: { assets: { select: { blobUrl: true } } },
+  });
   if (!existing) {
     return NextResponse.json({ error: "Reporte no encontrado" }, { status: 404 });
+  }
+
+  if (existing.assets.length) {
+    await del(existing.assets.map((a) => a.blobUrl)).catch(() => {});
   }
 
   await prisma.report.delete({ where: { id } });

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { upload } from "@vercel/blob/client";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { VisibilityControl, type Visibility } from "@/components/VisibilityControl";
 
@@ -31,8 +32,10 @@ export function NewReportForm() {
   const [description, setDescription] = useState("");
   const [slugOverride, setSlugOverride] = useState("");
   const [html, setHtml] = useState("");
+  const [zipFile, setZipFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileSize, setFileSize] = useState(0);
+  const [uploadStage, setUploadStage] = useState<"" | "zip" | "creating">("");
   const [dragOver, setDragOver] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [allowComments, setAllowComments] = useState(false);
@@ -46,8 +49,18 @@ export function NewReportForm() {
   const slug = slugOverride ? previewSlug(slugOverride) : previewSlug(title);
 
   async function handleFile(file: File) {
+    if (file.name.toLowerCase().endsWith(".zip")) {
+      setZipFile(file);
+      setHtml("");
+      setFileName(file.name);
+      setFileSize(file.size);
+      if (!title) setTitle(file.name.replace(/\.zip$/i, ""));
+      return;
+    }
+
     const text = await file.text();
     setHtml(text);
+    setZipFile(null);
     setFileName(file.name);
     setFileSize(file.size);
     if (!title) {
@@ -59,8 +72,8 @@ export function NewReportForm() {
     e.preventDefault();
     setError(null);
 
-    if (!html.trim()) {
-      setError("Subí un archivo .html o pegá el contenido");
+    if (!html.trim() && !zipFile) {
+      setError("Subí un archivo .html o .zip, o pegá el contenido");
       return;
     }
 
@@ -70,22 +83,49 @@ export function NewReportForm() {
     }
 
     setPending(true);
-    const res = await fetch("/api/reports", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title,
-        description,
-        html,
-        slug: slugOverride || undefined,
-        allowComments,
-        visibility,
-        password: visibility === "PASSWORD" ? password : undefined,
-        viewerIds: visibility === "RESTRICTED" ? viewerIds : undefined,
-      }),
-    });
+
+    const commonBody = {
+      title,
+      description,
+      slug: slugOverride || undefined,
+      allowComments,
+      visibility,
+      password: visibility === "PASSWORD" ? password : undefined,
+      viewerIds: visibility === "RESTRICTED" ? viewerIds : undefined,
+    };
+
+    let res: Response;
+    try {
+      if (zipFile) {
+        setUploadStage("zip");
+        const blob = await upload(zipFile.name, zipFile, {
+          access: "public",
+          handleUploadUrl: "/api/blob/upload-zip",
+        });
+        setUploadStage("creating");
+        res = await fetch("/api/reports/from-zip", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...commonBody, blobUrl: blob.url }),
+        });
+      } else {
+        setUploadStage("creating");
+        res = await fetch("/api/reports", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...commonBody, html }),
+        });
+      }
+    } catch {
+      setPending(false);
+      setUploadStage("");
+      setError("No se pudo subir el archivo. Probá de nuevo.");
+      return;
+    }
+
     const data = await res.json().catch(() => ({}));
     setPending(false);
+    setUploadStage("");
 
     if (!res.ok) {
       setError(data.error || "No se pudo subir el reporte");
@@ -100,10 +140,12 @@ export function NewReportForm() {
     setDescription("");
     setSlugOverride("");
     setHtml("");
+    setZipFile(null);
     setFileName(null);
     setFileSize(0);
     setShowPreview(false);
     setPublished(null);
+    setUploadStage("");
     setAllowComments(false);
     setVisibility("PUBLIC");
     setPassword("");
@@ -146,7 +188,7 @@ export function NewReportForm() {
       <form onSubmit={handleSubmit}>
         {fileName ? (
           <div className="file-pill">
-            <span className="fi">HTML</span>
+            <span className="fi">{zipFile ? "ZIP" : "HTML"}</span>
             <div>
               <div className="fn">{fileName}</div>
               <div className="fs">{formatSize(fileSize)}</div>
@@ -180,12 +222,12 @@ export function NewReportForm() {
                 <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
               </svg>
             </span>
-            <span className="t">Arrastrá aquí tu .html</span>
-            <span className="s">o hacé clic para elegirlo</span>
+            <span className="t">Arrastrá aquí tu .html o .zip</span>
+            <span className="s">el .zip puede traer fotos, videos y otros archivos sueltos</span>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".html,.htm,text/html"
+              accept=".html,.htm,.zip,text/html,application/zip"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) handleFile(file);
@@ -194,7 +236,7 @@ export function NewReportForm() {
           </label>
         )}
 
-        <details style={{ marginTop: 14, fontSize: "0.85rem" }}>
+        <details style={{ marginTop: 14, fontSize: "0.85rem" }} hidden={!!zipFile}>
           <summary className="mono-label" style={{ cursor: "pointer" }}>
             O pegá el HTML directamente
           </summary>
@@ -297,11 +339,19 @@ export function NewReportForm() {
           </div>
         )}
 
+        {zipFile && (
+          <div className="hint">La vista previa no está disponible para archivos .zip todavía.</div>
+        )}
+
         {error && <div className="err">{error}</div>}
 
         <div className="actions">
           <button type="submit" disabled={pending} className="btn btn-primary">
-            {pending ? "Subiendo..." : "Publicar reporte"}
+            {uploadStage === "zip"
+              ? "Subiendo ZIP..."
+              : uploadStage === "creating"
+                ? "Procesando..."
+                : "Publicar reporte"}
           </button>
         </div>
       </form>
