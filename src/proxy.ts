@@ -7,6 +7,9 @@ export default auth((req) => {
   const isPublic =
     pathname === "/login" ||
     pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname.startsWith("/api/password/") ||
     pathname === "/comment-overlay.js" ||
     pathname.startsWith("/r/") ||
     pathname.startsWith("/api/auth") ||

@@ -69,11 +69,23 @@ function LoginForm() {
             style={{ marginTop: 8 }}
           />
 
+          {searchParams.get("reset") === "1" && (
+            <div className="hint ok" style={{ marginTop: 12 }}>
+              Contraseña actualizada. Ya podés iniciar sesión.
+            </div>
+          )}
+
           {error && <div className="err">{error}</div>}
 
           <button type="submit" disabled={pending} className="btn btn-primary">
             {pending ? "Ingresando..." : "Ingresar"}
           </button>
+
+          <p style={{ marginTop: 14, marginBottom: 0, textAlign: "center", fontSize: "0.85rem" }}>
+            <Link href="/forgot-password" style={{ color: "var(--text-dim)", textDecoration: "underline" }}>
+              Olvidé mi contraseña
+            </Link>
+          </p>
 
           <p style={{ marginTop: 18, marginBottom: 0, textAlign: "center" }}>
             ¿No tenés cuenta?{" "}
