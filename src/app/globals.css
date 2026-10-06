@@ -828,3 +828,9 @@ footer {
   border-radius: 50%;
 }
 .btn-icon.is-done { border-color: var(--teal); color: var(--teal); }
+.spot-hole::after { border-radius: inherit; }
+.spot-arrow.down {
+  top: auto;
+  bottom: -7px;
+  transform: translateX(-50%) rotate(225deg);
+}

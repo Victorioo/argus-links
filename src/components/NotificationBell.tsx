@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Spotlight } from "@/components/Spotlight";
+import { BELL_TOUR_KEY } from "@/components/tours";
 
 type Item = {
   id: string;
@@ -15,8 +16,6 @@ type Item = {
 };
 
 const POLL_MS = 60_000;
-// Bump the suffix to show the tour again, e.g. if the bell changes a lot.
-const TOUR_KEY = "report-hub-bell-tour-v1";
 
 function timeAgo(iso: string): string {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -64,7 +63,7 @@ export function NotificationBell() {
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        if (!localStorage.getItem(TOUR_KEY)) setShowTour(true);
+        if (!localStorage.getItem(BELL_TOUR_KEY)) setShowTour(true);
       } catch {
         // sin localStorage no se muestra
       }
@@ -75,7 +74,7 @@ export function NotificationBell() {
   const endTour = useCallback(() => {
     setShowTour(false);
     try {
-      localStorage.setItem(TOUR_KEY, "1");
+      localStorage.setItem(BELL_TOUR_KEY, "1");
     } catch {
       // ignorar
     }

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ClaudeLogo, ClaudeMark } from "@/components/ClaudeLogo";
+import { Spotlight } from "@/components/Spotlight";
+import { BELL_TOUR_KEY, CLAUDE_TOUR_KEY } from "@/components/tours";
 
 export type AiComment = {
   id: string;
@@ -53,6 +55,32 @@ export function ClaudeApplyComments({
   const [result, setResult] = useState<AiResult | null>(null);
   const [deleteApplied, setDeleteApplied] = useState(false);
   const [published, setPublished] = useState(false);
+  const headRef = useRef<HTMLDivElement>(null);
+  const [showTour, setShowTour] = useState(false);
+
+  // One-time "what is new" spotlight. Only after the bell tour was seen, so two
+  // tours never stack; if storage is unavailable it is skipped.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        if (localStorage.getItem(CLAUDE_TOUR_KEY) || !localStorage.getItem(BELL_TOUR_KEY)) return;
+        headRef.current?.scrollIntoView({ block: "center" });
+        setShowTour(true);
+      } catch {
+        // sin localStorage no se muestra
+      }
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const endTour = useCallback(() => {
+    setShowTour(false);
+    try {
+      localStorage.setItem(CLAUDE_TOUR_KEY, "1");
+    } catch {
+      // ignorar
+    }
+  }, []);
 
   function toggle(id: string) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -118,10 +146,21 @@ export function ClaudeApplyComments({
 
   return (
     <section className="claude-card" style={{ maxWidth: 720, margin: "0 auto 24px" }}>
-      <div className="claude-brand">
-        <ClaudeLogo height={26} />
+      <div ref={headRef}>
+        <div className="claude-brand">
+          <ClaudeLogo height={26} />
+        </div>
+        <h2>Aplicar comentarios con Claude</h2>
       </div>
-      <h2>Aplicar comentarios con Claude</h2>
+      {showTour && (
+        <Spotlight
+          target={headRef}
+          shape="rect"
+          title="Aplicá los comentarios con Claude"
+          text="Ahora Claude puede leer los comentarios de tu reporte y proponer los cambios por vos. Elegí cuáles aplicar y revisá la vista previa antes de publicar."
+          onDone={endTour}
+        />
+      )}
       <p className="claude-lead">
         Elegí qué comentarios aplicar y Claude propone los cambios en el reporte. Antes de publicar vas a
         ver una vista previa: nada se guarda hasta que lo confirmes.
