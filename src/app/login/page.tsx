@@ -12,10 +12,24 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [unverified, setUnverified] = useState(false);
+  const [resentNotice, setResentNotice] = useState(false);
+
+  async function resendVerification() {
+    await fetch("/api/verify/resend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    setUnverified(false);
+    setError(null);
+    setResentNotice(true);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setResentNotice(false);
     setPending(true);
 
     const result = await signIn("credentials", {
@@ -27,7 +41,13 @@ function LoginForm() {
     setPending(false);
 
     if (result?.error) {
-      setError("Email o contraseña incorrectos");
+      if (result.code === "email_not_verified") {
+        setUnverified(true);
+        setError("Todavía no confirmaste tu email. Abrí el link que te enviamos al registrarte.");
+      } else {
+        setUnverified(false);
+        setError("Email o contraseña incorrectos");
+      }
       return;
     }
 
@@ -75,7 +95,32 @@ function LoginForm() {
             </div>
           )}
 
-          {error && <div className="err">{error}</div>}
+          {searchParams.get("verified") === "1" && (
+            <div className="hint ok" style={{ marginTop: 12 }}>
+              Email confirmado. Ya podés iniciar sesión.
+            </div>
+          )}
+
+          {resentNotice && (
+            <div className="hint ok" style={{ marginTop: 12 }}>
+              Si la cuenta falta confirmarla, te enviamos un nuevo email.
+            </div>
+          )}
+
+          {error && (
+            <div className="err">
+              {error}{" "}
+              {unverified && (
+                <button
+                  type="button"
+                  onClick={resendVerification}
+                  style={{ background: "none", border: "none", padding: 0, color: "inherit", textDecoration: "underline", cursor: "pointer", font: "inherit" }}
+                >
+                  Reenviar email
+                </button>
+              )}
+            </div>
+          )}
 
           <button type="submit" disabled={pending} className="btn btn-primary">
             {pending ? "Ingresando..." : "Ingresar"}

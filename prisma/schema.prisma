@@ -12,12 +12,27 @@ model User {
   name         String
   email        String   @unique
   passwordHash String
+  // null = signed up but has not confirmed the email yet (cannot sign in)
+  emailVerified DateTime?
   createdAt    DateTime @default(now())
 
   createdReports Report[] @relation("createdReports")
   updatedReports Report[] @relation("updatedReports")
   viewableReports ReportViewer[]
   passwordResets  PasswordResetToken[]
+  verificationTokens EmailVerificationToken[]
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model PasswordResetToken {

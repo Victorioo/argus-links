@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { queueVerificationEmail } from "@/lib/email-verification";
 
 const registerSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(100),
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
+  if (existing?.emailVerified) {
     return NextResponse.json(
       { error: "Ya existe una cuenta con ese email" },
       { status: 409 },
@@ -40,9 +41,13 @@ export async function POST(req: Request) {
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  await prisma.user.create({
-    data: { name, email, passwordHash },
-  });
+  // An unverified account can't sign in or own anything, so the real owner of
+  // the address may re-register over it (e.g. someone typed their email).
+  const user = existing
+    ? await prisma.user.update({ where: { id: existing.id }, data: { name, passwordHash } })
+    : await prisma.user.create({ data: { name, email, passwordHash } });
 
-  return NextResponse.json({ ok: true });
+  await queueVerificationEmail(user);
+
+  return NextResponse.json({ ok: true, needsVerification: true });
 }

@@ -35,6 +35,11 @@ export async function POST(req: Request) {
   await prisma.$transaction([
     prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
     prisma.passwordResetToken.deleteMany({ where: { userId: record.userId } }),
+    // Opening a link sent to the mailbox proves ownership of the address too.
+    prisma.user.updateMany({
+      where: { id: record.userId, emailVerified: null },
+      data: { emailVerified: new Date() },
+    }),
   ]);
 
   return NextResponse.json({ ok: true });

@@ -1,17 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [resent, setResent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,16 +31,44 @@ export default function RegisterPage() {
       return;
     }
 
-    const result = await signIn("credentials", { email, password, redirect: false });
     setPending(false);
+    setSent(true);
+  }
 
-    if (result?.error) {
-      router.push("/login");
-      return;
-    }
+  async function resend() {
+    setResent(false);
+    await fetch("/api/verify/resend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    setResent(true);
+  }
 
-    router.push("/");
-    router.refresh();
+  if (sent) {
+    return (
+      <main className="wrap">
+        <div className="login">
+          <div className="panel">
+            <span className="eyebrow">Equipo Argus</span>
+            <h2>Revisá tu correo</h2>
+            <p>
+              Te enviamos un link de confirmación a <b>{email}</b>. Abrilo para activar tu cuenta y
+              después iniciá sesión. Si no lo ves, mirá en spam.
+            </p>
+            {resent && <div className="hint ok">Listo, te enviamos otro email.</div>}
+            <button type="button" className="btn btn-primary" onClick={resend}>
+              Reenviar email
+            </button>
+            <p style={{ marginTop: 18, marginBottom: 0, textAlign: "center" }}>
+              <Link href="/login" style={{ color: "var(--violet-300)", fontWeight: 600 }}>
+                Ir a iniciar sesión
+              </Link>
+            </p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (

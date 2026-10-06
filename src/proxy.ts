@@ -10,6 +10,8 @@ export default auth((req) => {
     pathname === "/forgot-password" ||
     pathname === "/reset-password" ||
     pathname.startsWith("/api/password/") ||
+    pathname === "/verify-email" ||
+    pathname.startsWith("/api/verify/") ||
     pathname === "/comment-overlay.js" ||
     pathname.startsWith("/r/") ||
     pathname.startsWith("/api/auth") ||
