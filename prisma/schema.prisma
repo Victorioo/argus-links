@@ -23,6 +23,7 @@ model User {
   verificationTokens EmailVerificationToken[]
   comments           Comment[]
   notifications      Notification[]
+  aiRuns             AiRun[]
 }
 
 model EmailVerificationToken {
@@ -81,6 +82,7 @@ model Report {
   allowedViewers ReportViewer[]
   assets         ReportAsset[]
   notifications  Notification[]
+  aiRuns         AiRun[]
 }
 
 model ReportAsset {
@@ -159,5 +161,23 @@ model Notification {
   comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+// One row per call to Claude, used for the per-user daily limit and to keep an
+// eye on spend.
+model AiRun {
+  id           String   @id @default(cuid())
+  model        String
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reportId String
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
   @@index([userId, createdAt])
 }

@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/Navbar";
 import { EditReportForm } from "@/components/EditReportForm";
+import { ClaudeApplyComments } from "@/components/ClaudeApplyComments";
+import { aiEnabled } from "@/lib/claude-edit";
 
 export default async function ReportDetailPage({
   params,
@@ -30,6 +32,16 @@ export default async function ReportDetailPage({
       })
     : [];
 
+  // Claude edits the stored HTML, so only top-level comments left on the main
+  // page are candidates. Hidden entirely until an API key is configured.
+  const aiComments = aiEnabled()
+    ? await prisma.comment.findMany({
+        where: { reportId: report.id, parentId: null, page: "" },
+        orderBy: { createdAt: "asc" },
+        include: { _count: { select: { replies: true } } },
+      })
+    : [];
+
   return (
     <>
       <Navbar />
@@ -38,6 +50,18 @@ export default async function ReportDetailPage({
           <span className="eyebrow">Editar reporte</span>
           <h2>{report.title}</h2>
         </section>
+        {aiComments.length > 0 && (
+          <ClaudeApplyComments
+            reportId={report.id}
+            slug={report.slug}
+            comments={aiComments.map((c) => ({
+              id: c.id,
+              authorName: c.authorName,
+              text: c.text,
+              replyCount: c._count.replies,
+            }))}
+          />
+        )}
         <EditReportForm
           id={report.id}
           initialTitle={report.title}
