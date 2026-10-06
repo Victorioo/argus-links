@@ -11,8 +11,8 @@ export async function DELETE(
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const { commentId } = await params;
-  await prisma.comment.deleteMany({ where: { id: commentId } });
+  const { slug, commentId } = await params;
+  await prisma.comment.deleteMany({ where: { id: commentId, report: { slug } } });
 
   return NextResponse.json({ ok: true });
 }

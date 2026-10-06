@@ -99,4 +99,12 @@ model Comment {
 
   reportId String
   report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  // Replies point at a top-level comment (one level of nesting). Deleting a
+  // comment deletes its replies.
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  @@index([parentId])
 }

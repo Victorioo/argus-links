@@ -52,6 +52,7 @@
   var style = document.createElement("style");
   style.textContent = [
     ":host { all: initial; }",
+    "[hidden] { display: none !important; }",
     "* { box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; }",
     ".layer { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; }",
     ".toggle { position: fixed; right: 20px; bottom: 20px; z-index: 2147483001; pointer-events: auto;",
@@ -112,6 +113,11 @@
     ".pi-author { font-weight: 700; color: #C4B5FD; font-size: 12.5px; }",
     ".pi-text { margin-top: 4px; font-size: 12.5px; line-height: 1.4; word-break: break-word; }",
     ".pi-date { margin-top: 6px; font-size: 10.5px; color: #6E6488; }",
+    ".reply { margin-left: 14px; padding-left: 10px; border-left: 2px solid #2A2340; }",
+    ".reply-btn { margin-top: 4px; }",
+    ".replying { font-size: 11.5px; color: #A79FC2; margin-bottom: 8px; }",
+    ".pi-actions { display: flex; gap: 6px; flex: none; }",
+    ".pi-reply-item { margin-top: 10px; margin-left: 12px; padding-left: 10px; border-left: 2px solid #2A2340; cursor: default; }",
     ".panel-empty { padding: 30px 16px; text-align: center; color: #6E6488; font-size: 12.5px; }",
   ].join("\n");
   root.appendChild(style);
@@ -166,6 +172,7 @@
   var pickMode = false;
   var comments = []; // { id, selector, authorName, text, createdAt }
   var openPopover = null;
+  var viewer = null; // { name } when the visitor is signed in to Report Hub
 
   toggle.addEventListener("click", function () {
     pickMode = !pickMode;
@@ -268,6 +275,15 @@
     var changeBtn = pop.querySelector(".link-btn");
     var saved = getSavedName();
 
+    if (viewer) {
+      nameInput.value = viewer.name;
+      whoName.textContent = viewer.name;
+      whoRow.hidden = false;
+      changeBtn.hidden = true;
+      nameInput.hidden = true;
+      return nameInput;
+    }
+
     if (saved) {
       nameInput.value = saved;
       whoName.textContent = saved;
@@ -333,16 +349,22 @@
       var text = textArea.value.trim();
       if (!text) return;
       var authorName = nameInput.value.trim();
-      setSavedName(authorName);
-      submitComment(selector, authorName, text);
+      if (!viewer) setSavedName(authorName);
+      submitComment({ selector: selector }, authorName, text);
     });
   }
 
-  function submitComment(selector, authorName, text) {
+  function submitComment(target, authorName, text, onDone) {
     fetch(API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ selector: selector, page: currentPage(), authorName: authorName, text: text }),
+      body: JSON.stringify({
+        selector: target.selector,
+        page: currentPage(),
+        parentId: target.parentId || undefined,
+        authorName: authorName,
+        text: text,
+      }),
     })
       .then(function (res) {
         return res.json();
@@ -350,37 +372,57 @@
       .then(function (data) {
         if (data && data.comment) {
           comments.push(data.comment);
-          closePopover();
           renderPins();
           renderPanel();
+          if (onDone) onDone();
+          else closePopover();
         }
       })
       .catch(function () {});
   }
 
-  function openThread(selector, x, y) {
+  function commentHtml(c, withReply) {
+    return (
+      '<div class="c-item"><div class="c-author">' + escapeHtml(c.authorName) + "</div>" +
+      '<div class="c-text">' + escapeHtml(c.text) + "</div>" +
+      (withReply ? '<button type="button" class="link-btn reply-btn" data-reply="' + escapeHtml(c.id) + '">Responder</button>' : "") +
+      "</div>"
+    );
+  }
+
+  function openThread(selector, x, y, replyToId) {
     closePopover();
     var pop = document.createElement("div");
     pop.className = "popover";
 
-    var items = comments.filter(function (c) {
+    var roots = comments.filter(function (c) {
+      return c.selector === selector && onThisPage(c) && !c.parentId;
+    });
+    var total = comments.filter(function (c) {
       return c.selector === selector && onThisPage(c);
-    });
+    }).length;
+    var replyTarget = replyToId
+      ? comments.filter(function (c) {
+          return c.id === replyToId;
+        })[0]
+      : null;
 
-    var html =
-      '<button class="close" type="button">✕</button>' +
-      "<h4>Comentarios (" + items.length + ")</h4>" +
+    var html = '<button class="close" type="button">✕</button><h4>Comentarios (' + total + ")</h4>" +
       '<div class="thread">';
-    items.forEach(function (c) {
-      html +=
-        '<div class="c-item"><div class="c-author">' +
-        escapeHtml(c.authorName) +
-        '</div><div class="c-text">' +
-        escapeHtml(c.text) +
-        "</div></div>";
+    roots.forEach(function (root) {
+      html += commentHtml(root, true);
+      comments.forEach(function (r) {
+        if (r.parentId === root.id) html += '<div class="reply">' + commentHtml(r, false) + "</div>";
+      });
     });
-    html += "</div>" + NAME_SECTION_HTML + '<textarea placeholder="Responder..." maxlength="2000"></textarea>' +
-      '<div class="row"><button class="btn btn-primary" type="button">Comentar</button></div>';
+    html += "</div>";
+    html += '<div class="replying" ' + (replyTarget ? "" : "hidden") + ">Respondiendo a <b>" +
+      (replyTarget ? escapeHtml(replyTarget.authorName) : "") +
+      '</b> <button type="button" class="link-btn cancel-reply">cancelar</button></div>';
+    html += NAME_SECTION_HTML +
+      '<textarea placeholder="' + (replyTarget ? "Escribí tu respuesta..." : "Agregar un comentario nuevo...") +
+      '" maxlength="2000"></textarea>' +
+      '<div class="row"><button class="btn btn-primary" type="button">' + (replyTarget ? "Responder" : "Comentar") + "</button></div>";
     pop.innerHTML = html;
 
     root.appendChild(pop);
@@ -394,12 +436,27 @@
     pop.style.top = clampY(y, rect.height) + "px";
 
     pop.querySelector(".close").addEventListener("click", closePopover);
+    pop.querySelectorAll(".reply-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        openThread(selector, x, y, btn.getAttribute("data-reply"));
+      });
+    });
+    var cancel = pop.querySelector(".cancel-reply");
+    if (cancel) {
+      cancel.addEventListener("click", function () {
+        openThread(selector, x, y, null);
+      });
+    }
+    if (replyTarget) textArea.focus();
+
     pop.querySelector(".btn-primary").addEventListener("click", function () {
       var text = textArea.value.trim();
       if (!text) return;
       var authorName = nameInput.value.trim();
-      setSavedName(authorName);
-      submitComment(selector, authorName, text);
+      if (!viewer) setSavedName(authorName);
+      submitComment({ selector: selector, parentId: replyTarget ? replyTarget.id : null }, authorName, text, function () {
+        openThread(selector, x, y, null);
+      });
     });
   }
 
@@ -461,37 +518,73 @@
       return;
     }
 
-    var sorted = comments.slice().sort(function (a, b) {
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    });
+    var roots = comments
+      .filter(function (c) {
+        return !c.parentId;
+      })
+      .sort(function (a, b) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+    function itemHtml(c, isReply) {
+      return (
+        '<div class="pi-top"><span class="pi-author">' + escapeHtml(c.authorName) + "</span>" +
+        '<span class="pi-actions">' +
+        (isReply ? "" : '<button type="button" class="btn btn-quiet pi-reply" style="padding:3px 9px;font-size:10.5px;">Responder</button>') +
+        '<button type="button" class="btn btn-quiet pi-delete" style="padding:3px 9px;font-size:10.5px;">Borrar</button></span></div>' +
+        '<div class="pi-text">' + escapeHtml(c.text) + "</div>" +
+        '<div class="pi-date">' + formatDate(c.createdAt) +
+        (!isReply && !onThisPage(c) ? " · " + escapeHtml(pageLabel(c.page)) : "") + "</div>"
+      );
+    }
 
     panelList.innerHTML = "";
-    sorted.forEach(function (c) {
+    roots.forEach(function (c) {
       var item = document.createElement("div");
       item.className = "panel-item";
-      item.innerHTML =
-        '<div class="pi-top"><span class="pi-author">' +
-        escapeHtml(c.authorName) +
-        '</span><button type="button" class="btn btn-quiet" style="padding:3px 9px;font-size:10.5px;">Borrar</button></div>' +
-        '<div class="pi-text">' +
-        escapeHtml(c.text) +
-        '</div><div class="pi-date">' +
-        formatDate(c.createdAt) +
-        (onThisPage(c) ? "" : " · " + escapeHtml(pageLabel(c.page))) +
-        "</div>";
+      item.innerHTML = itemHtml(c, false);
 
-      item.addEventListener("click", function () {
+      comments.forEach(function (r) {
+        if (r.parentId !== c.id) return;
+        var reply = document.createElement("div");
+        reply.className = "pi-reply-item";
+        reply.innerHTML = itemHtml(r, true);
+        reply.addEventListener("click", function (e) {
+          e.stopPropagation();
+        });
+        reply.querySelector(".pi-delete").addEventListener("click", function (e) {
+          e.stopPropagation();
+          deleteComment(r.id);
+        });
+        item.appendChild(reply);
+      });
+
+      function goTo(replyId) {
         if (!onThisPage(c)) {
           location.href = pageUrl(c.page || "");
           return;
         }
         var el = findTarget(c.selector);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          flashHighlight(el);
+        if (!el) return;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        flashHighlight(el);
+        if (replyId) {
+          panel.classList.remove("open");
+          setTimeout(function () {
+            var r = el.getBoundingClientRect();
+            openThread(c.selector, r.left, r.bottom + 6, replyId);
+          }, 350);
         }
+      }
+
+      item.addEventListener("click", function () {
+        goTo(null);
       });
-      item.querySelector("button").addEventListener("click", function (e) {
+      item.querySelector(".pi-reply").addEventListener("click", function (e) {
+        e.stopPropagation();
+        goTo(c.id);
+      });
+      item.querySelector(".pi-delete").addEventListener("click", function (e) {
         e.stopPropagation();
         deleteComment(c.id);
       });
@@ -555,6 +648,7 @@
     })
     .then(function (data) {
       comments = (data && data.comments) || [];
+      viewer = (data && data.viewer) || null;
       renderPins();
       renderPanel();
     })
