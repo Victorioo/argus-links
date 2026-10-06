@@ -26,7 +26,7 @@ export default async function DashboardPage() {
     sizeBytes: r.sizeBytes,
     views: r.views,
     updatedAt: r.updatedAt.toISOString(),
-    createdByName: r.createdBy.name,
+    createdByName: r.createdBy?.name ?? "Cuenta eliminada",
     updatedByName: r.updatedBy?.name ?? null,
     visibility: r.visibility,
   }));

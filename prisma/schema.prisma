@@ -67,11 +67,13 @@ model Report {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
-  createdById String
-  createdBy   User   @relation("createdReports", fields: [createdById], references: [id])
+  // Reports outlive the account that created them: deleting a user leaves the
+  // report in place with no owner.
+  createdById String?
+  createdBy   User?   @relation("createdReports", fields: [createdById], references: [id], onDelete: SetNull)
 
   updatedById String?
-  updatedBy   User?   @relation("updatedReports", fields: [updatedById], references: [id])
+  updatedBy   User?   @relation("updatedReports", fields: [updatedById], references: [id], onDelete: SetNull)
 
   comments       Comment[]
   allowedViewers ReportViewer[]
