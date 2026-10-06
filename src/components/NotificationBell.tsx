@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Spotlight } from "@/components/Spotlight";
 
 type Item = {
   id: string;
@@ -14,6 +15,8 @@ type Item = {
 };
 
 const POLL_MS = 60_000;
+// Bump the suffix to show the tour again, e.g. if the bell changes a lot.
+const TOUR_KEY = "report-hub-bell-tour-v1";
 
 function timeAgo(iso: string): string {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -29,6 +32,8 @@ export function NotificationBell() {
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [showTour, setShowTour] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -53,6 +58,28 @@ export function NotificationBell() {
       window.removeEventListener("focus", onFocus);
     };
   }, [load]);
+
+  // One-time "what is new" spotlight. If storage is unavailable we skip it
+  // rather than risk showing it on every visit.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        if (!localStorage.getItem(TOUR_KEY)) setShowTour(true);
+      } catch {
+        // sin localStorage no se muestra
+      }
+    }, 900);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const endTour = useCallback(() => {
+    setShowTour(false);
+    try {
+      localStorage.setItem(TOUR_KEY, "1");
+    } catch {
+      // ignorar
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -91,8 +118,17 @@ export function NotificationBell() {
 
   return (
     <div className="bell" ref={wrapRef}>
+      {showTour && (
+        <Spotlight
+          target={btnRef}
+          title="Tus notificaciones"
+          text="Ahora podés ver acá todas tus notificaciones: cuando alguien comenta en un reporte tuyo o responde uno de tus comentarios."
+          onDone={endTour}
+        />
+      )}
       <button
         type="button"
+        ref={btnRef}
         className="bell-btn"
         aria-label={unread ? `Notificaciones (${unread} sin leer)` : "Notificaciones"}
         aria-expanded={open}

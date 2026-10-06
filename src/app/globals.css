@@ -674,3 +674,58 @@ footer {
   .bell { position: static; }
   .bell-menu { position: fixed; left: 12px; right: 12px; top: 64px; width: auto; }
 }
+
+/* "what's new" spotlight */
+.spot { position: fixed; inset: 0; z-index: 100; cursor: default; animation: spot-in 0.35s ease both; }
+.spot-hole {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 0 100vmax rgba(5, 3, 12, 0.78), 0 0 0 2px var(--gold), 0 0 28px 4px rgba(240, 185, 77, 0.45);
+}
+.spot-hole::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  animation: spot-ring 1.8s ease-out infinite;
+}
+.spot-tip {
+  position: fixed;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 24px 55px -18px rgba(0, 0, 0, 0.7);
+  animation: spot-tip-in 0.4s 0.15s ease both;
+}
+.spot-tip h3 { margin: 8px 0 6px; font-size: 1.05rem; }
+.spot-tip p { margin: 0 0 14px; font-size: 0.88rem; line-height: 1.5; color: var(--text-dim); }
+.spot-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.spot-arrow {
+  position: absolute;
+  top: -7px;
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  transform: translateX(-50%) rotate(45deg);
+}
+@keyframes spot-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes spot-tip-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes spot-ring {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spot, .spot-tip, .spot-hole::after { animation: none; }
+}
