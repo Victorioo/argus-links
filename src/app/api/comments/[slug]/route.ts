@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
   selector: z.string().trim().min(1).max(500),
+  page: z.string().max(300).optional(),
   authorName: z.string().trim().max(80).optional(),
   text: z.string().trim().min(1, "El comentario no puede estar vacío").max(2000),
 });
@@ -57,6 +58,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     data: {
       reportId: report.id,
       selector: parsed.data.selector,
+      page: parsed.data.page ?? "",
       authorName: parsed.data.authorName || "Anónimo",
       text: parsed.data.text,
     },

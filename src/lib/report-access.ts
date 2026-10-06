@@ -9,6 +9,14 @@ export const HTML_HEADERS = {
   "X-Robots-Tag": "noindex",
 };
 
+export function withCommentOverlay(html: string, slug: string): string {
+  const tag = `<script src="/comment-overlay.js" data-report-slug="${slug}" defer></script>`;
+  if (/<\/body>/i.test(html)) {
+    return html.replace(/<\/body>/i, `${tag}</body>`);
+  }
+  return `${html}${tag}`;
+}
+
 export type ReportForAccess = Pick<Report, "id" | "createdById" | "visibility" | "passwordHash"> & {
   visibility: ReportVisibility;
   allowedViewers: { userId: string }[];

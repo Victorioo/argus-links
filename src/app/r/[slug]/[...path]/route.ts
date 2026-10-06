@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkReportAccess } from "@/lib/report-access";
+import { checkReportAccess, withCommentOverlay } from "@/lib/report-access";
 
 export async function GET(
   req: Request,
@@ -27,6 +27,23 @@ export async function GET(
 
   if (!asset) {
     return new NextResponse("Archivo no encontrado", { status: 404 });
+  }
+
+  // Inner pages of a multi-page site (e.g. collection.html, a product page)
+  // need the comment overlay too, otherwise commenting only works on the
+  // entry page.
+  if (report.allowComments && /^text\/html/i.test(asset.contentType)) {
+    const htmlRes = await fetch(asset.blobUrl);
+    if (!htmlRes.ok) {
+      return new NextResponse("No se pudo cargar el archivo", { status: 502 });
+    }
+    return new NextResponse(withCommentOverlay(await htmlRes.text(), slug), {
+      status: 200,
+      headers: {
+        "Content-Type": asset.contentType,
+        "Cache-Control": "private, no-cache",
+      },
+    });
   }
 
   // Proxy through our own server rather than redirecting to the blob URL

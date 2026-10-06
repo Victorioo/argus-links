@@ -90,6 +90,9 @@ model ReportViewer {
 model Comment {
   id         String   @id @default(cuid())
   selector   String
+  // Which page of a multi-page (.zip) report the comment belongs to, relative
+  // to /r/<slug>/ (including the query string). "" is the main page.
+  page       String   @default("")
   authorName String
   text       String
   createdAt  DateTime @default(now())

@@ -7,15 +7,8 @@ import {
   renderLockScreen,
   unlockCookieName,
   unlockToken,
+  withCommentOverlay,
 } from "@/lib/report-access";
-
-function withCommentOverlay(html: string, slug: string): string {
-  const tag = `<script src="/comment-overlay.js" data-report-slug="${slug}" defer></script>`;
-  if (/<\/body>/i.test(html)) {
-    return html.replace(/<\/body>/i, `${tag}</body>`);
-  }
-  return `${html}${tag}`;
-}
 
 // The page is served at /r/<slug> (no trailing slash), so a relative asset
 // path like "img/logo.png" would otherwise resolve against "/r/" instead of

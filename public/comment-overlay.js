@@ -22,6 +22,27 @@
     } catch {}
   }
 
+  // ---------------------------------------------------------------- page key
+  // Multi-page (.zip) sites share one report, so comments are scoped to the
+  // page they were left on: path relative to /r/<slug>/ plus the query string.
+  var BASE_PATH = "/r/" + slug;
+  function currentPage() {
+    var path = location.pathname;
+    if (path.indexOf(BASE_PATH) === 0) path = path.slice(BASE_PATH.length);
+    path = path.replace(/^\/+/, "");
+    if (path === "index.html") path = "";
+    return (path + location.search).slice(0, 300);
+  }
+  function pageUrl(page) {
+    return BASE_PATH + "/" + page;
+  }
+  function pageLabel(page) {
+    return page || "Página principal";
+  }
+  function onThisPage(c) {
+    return (c.page || "") === currentPage();
+  }
+
   // ---------------------------------------------------------------- host + shadow root
   var host = document.createElement("div");
   host.style.all = "initial";
@@ -321,7 +342,7 @@
     fetch(API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ selector: selector, authorName: authorName, text: text }),
+      body: JSON.stringify({ selector: selector, page: currentPage(), authorName: authorName, text: text }),
     })
       .then(function (res) {
         return res.json();
@@ -343,7 +364,7 @@
     pop.className = "popover";
 
     var items = comments.filter(function (c) {
-      return c.selector === selector;
+      return c.selector === selector && onThisPage(c);
     });
 
     var html =
@@ -456,9 +477,14 @@
         escapeHtml(c.text) +
         '</div><div class="pi-date">' +
         formatDate(c.createdAt) +
+        (onThisPage(c) ? "" : " · " + escapeHtml(pageLabel(c.page))) +
         "</div>";
 
       item.addEventListener("click", function () {
+        if (!onThisPage(c)) {
+          location.href = pageUrl(c.page || "");
+          return;
+        }
         var el = findTarget(c.selector);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -478,6 +504,7 @@
     pinsContainer.innerHTML = "";
     var bySelector = {};
     comments.forEach(function (c) {
+      if (!onThisPage(c)) return;
       if (!bySelector[c.selector]) bySelector[c.selector] = [];
       bySelector[c.selector].push(c);
     });
@@ -511,6 +538,15 @@
   }
   window.addEventListener("scroll", queueReposition, true);
   window.addEventListener("resize", queueReposition);
+
+  // Pages like a product detail are often rendered by JS after load, so
+  // pins must be re-placed once the elements they point to actually exist.
+  if (window.MutationObserver) {
+    new MutationObserver(queueReposition).observe(document.body || document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+  }
 
   // ---------------------------------------------------------------- initial load
   fetch(API)
