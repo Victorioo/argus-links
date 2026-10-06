@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ClaudeLogo, ClaudeMark } from "@/components/ClaudeLogo";
 
 export type AiComment = {
   id: string;
@@ -116,10 +117,12 @@ export function ClaudeApplyComments({
   };
 
   return (
-    <section className="panel" style={{ maxWidth: 720, margin: "0 auto 24px" }}>
-      <span className="eyebrow">Con Claude</span>
-      <h2 style={{ marginTop: 6 }}>Aplicar comentarios con Claude</h2>
-      <p style={{ marginBottom: 18 }}>
+    <section className="claude-card" style={{ maxWidth: 720, margin: "0 auto 24px" }}>
+      <div className="claude-brand">
+        <ClaudeLogo height={26} />
+      </div>
+      <h2>Aplicar comentarios con Claude</h2>
+      <p className="claude-lead">
         Elegí qué comentarios aplicar y Claude propone los cambios en el reporte. Antes de publicar vas a
         ver una vista previa: nada se guarda hasta que lo confirmes.
       </p>
@@ -183,6 +186,7 @@ export function ClaudeApplyComments({
             onClick={run}
             style={{ marginTop: 14 }}
           >
+            <ClaudeMark size={16} />
             {loading ? "Claude está trabajando…" : "Aplicar con Claude"}
           </button>
           {loading && <p className="hint" style={{ marginTop: 10 }}>Puede tardar uno o dos minutos. No cierres esta página.</p>}
