@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { ArgusLogo } from "@/components/ArgusLogo";
+import { NotificationBell } from "@/components/NotificationBell";
 import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -22,6 +23,7 @@ export async function Navbar() {
             Subir reporte
           </Link>
           <ThemeToggle />
+          {session?.user && <NotificationBell />}
           {session?.user && (
             <>
               <span className="mono-label" style={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

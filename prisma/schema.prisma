@@ -21,6 +21,8 @@ model User {
   viewableReports ReportViewer[]
   passwordResets  PasswordResetToken[]
   verificationTokens EmailVerificationToken[]
+  comments           Comment[]
+  notifications      Notification[]
 }
 
 model EmailVerificationToken {
@@ -78,6 +80,7 @@ model Report {
   comments       Comment[]
   allowedViewers ReportViewer[]
   assets         ReportAsset[]
+  notifications  Notification[]
 }
 
 model ReportAsset {
@@ -119,9 +122,42 @@ model Comment {
 
   // Replies point at a top-level comment (one level of nesting). Deleting a
   // comment deletes its replies.
+  // Set when the commenter was signed in; null for anonymous commenters.
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  notifications Notification[]
+
   parentId String?
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")
 
   @@index([parentId])
+}
+
+enum NotificationType {
+  COMMENT // someone commented on a report you created
+  REPLY   // someone replied to a comment you wrote
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  actorName String
+  snippet   String
+  page      String           @default("")
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reportId String
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  commentId String
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }

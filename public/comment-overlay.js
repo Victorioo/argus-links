@@ -642,6 +642,39 @@
     });
   }
 
+  // ---------------------------------------------------------------- deep link from a notification
+  // Links look like /r/<slug>/<page>#rh-comment=<id>: scroll to the element the
+  // comment is on and open its thread. Pages rendered by JS may need a moment
+  // before the element exists, so retry briefly.
+  function focusFromHash() {
+    var m = /rh-comment=([A-Za-z0-9_-]+)/.exec(location.hash);
+    if (!m) return;
+    var target = comments.filter(function (c) {
+      return c.id === m[1];
+    })[0];
+    if (!target) return;
+    var rootComment = target.parentId
+      ? comments.filter(function (c) {
+          return c.id === target.parentId;
+        })[0] || target
+      : target;
+
+    var tries = 0;
+    (function attempt() {
+      var el = findTarget(rootComment.selector);
+      if (!el) {
+        if (++tries < 15) setTimeout(attempt, 300);
+        return;
+      }
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      flashHighlight(el);
+      setTimeout(function () {
+        var r = el.getBoundingClientRect();
+        openThread(rootComment.selector, r.left, r.bottom + 6, null);
+      }, 500);
+    })();
+  }
+
   // ---------------------------------------------------------------- initial load
   fetch(API)
     .then(function (res) {
@@ -652,6 +685,7 @@
       viewer = (data && data.viewer) || null;
       renderPins();
       renderPanel();
+      focusFromHash();
     })
     .catch(function () {});
 })();
