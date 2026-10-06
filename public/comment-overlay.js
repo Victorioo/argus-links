@@ -272,7 +272,8 @@
     var whoRow = pop.querySelector(".who-row");
     var whoName = pop.querySelector(".who-name");
     var nameInput = pop.querySelector(".name-input");
-    var changeBtn = pop.querySelector(".link-btn");
+    // Scoped to the name row: a thread also contains "Responder" link buttons.
+    var changeBtn = pop.querySelector(".who-row .link-btn");
     var saved = getSavedName();
 
     if (viewer) {
