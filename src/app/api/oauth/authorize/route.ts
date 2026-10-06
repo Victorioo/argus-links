@@ -17,7 +17,9 @@ function backTo(redirectUri: string, params: Record<string, string>): NextRespon
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    // Session ended (e.g. the account no longer exists): send them to sign in
+    // again rather than showing raw JSON from a form submit.
+    return NextResponse.redirect(new URL("/login", req.url), 303);
   }
 
   const origin = req.headers.get("origin");
