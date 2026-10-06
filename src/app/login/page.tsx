@@ -51,7 +51,9 @@ function LoginForm() {
       return;
     }
 
-    router.push(searchParams.get("from") || "/");
+    // Only same-site paths: "from" must not be able to send people elsewhere.
+    const from = searchParams.get("from");
+    router.push(from && from.startsWith("/") && !from.startsWith("//") ? from : "/");
     router.refresh();
   }
 

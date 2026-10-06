@@ -24,6 +24,8 @@ model User {
   comments           Comment[]
   notifications      Notification[]
   aiRuns             AiRun[]
+  oauthCodes         OAuthCode[]
+  oauthTokens        OAuthToken[]
 }
 
 model EmailVerificationToken {
@@ -180,4 +182,52 @@ model AiRun {
   report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+// ---- Connect Claude (remote MCP, read-only) -------------------------------
+// OAuth 2.1 authorization server for the MCP endpoint. Only hashes of codes and
+// tokens are stored.
+
+model OAuthClient {
+  id           String   @id @default(cuid())
+  clientId     String   @unique
+  clientName   String
+  redirectUris String // JSON array of exact redirect URIs
+  createdAt    DateTime @default(now())
+
+  codes  OAuthCode[]
+  tokens OAuthToken[]
+}
+
+model OAuthCode {
+  id            String   @id @default(cuid())
+  codeHash      String   @unique
+  redirectUri   String
+  codeChallenge String // PKCE, S256
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  clientId String
+  client   OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OAuthToken {
+  id               String    @id @default(cuid())
+  accessHash       String    @unique
+  refreshHash      String    @unique
+  accessExpiresAt  DateTime
+  refreshExpiresAt DateTime
+  createdAt        DateTime  @default(now())
+  lastUsedAt       DateTime?
+
+  clientId String
+  client   OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

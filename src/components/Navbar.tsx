@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { ArgusLogo } from "@/components/ArgusLogo";
 import { NotificationBell } from "@/components/NotificationBell";
 import { UploadIcon } from "@/components/Icons";
+import { ClaudeMark } from "@/components/ClaudeLogo";
 import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -23,6 +24,12 @@ export async function Navbar() {
           <Link href="/reports/new" className="btn btn-primary btn-sm">
             <UploadIcon />
             Subir reporte
+          </Link>
+          <Link href="/connect" className="btn btn-quiet btn-sm" title="Conectar tu Claude a Report Hub">
+            <span style={{ color: "#d97757", display: "inline-flex" }}>
+              <ClaudeMark size={14} />
+            </span>
+            Claude
           </Link>
           <ThemeToggle />
           {session?.user && <NotificationBell />}

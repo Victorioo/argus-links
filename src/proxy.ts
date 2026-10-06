@@ -11,6 +11,11 @@ export default auth((req) => {
     pathname === "/reset-password" ||
     pathname.startsWith("/api/password/") ||
     pathname === "/verify-email" ||
+    // MCP / OAuth for connecting Claude: called by the connector, not a browser session
+    pathname.startsWith("/.well-known/") ||
+    pathname === "/api/mcp" ||
+    pathname === "/api/oauth/token" ||
+    pathname === "/api/oauth/register" ||
     pathname.startsWith("/api/verify/") ||
     pathname === "/comment-overlay.js" ||
     pathname.startsWith("/r/") ||
@@ -20,7 +25,8 @@ export default auth((req) => {
 
   if (!isLoggedIn && !isPublic) {
     const loginUrl = new URL("/login", req.nextUrl.origin);
-    loginUrl.searchParams.set("from", pathname);
+    // Keep the query string: /oauth/authorize?… must survive the login round trip.
+    loginUrl.searchParams.set("from", pathname + req.nextUrl.search);
     return NextResponse.redirect(loginUrl);
   }
 

@@ -834,3 +834,29 @@ footer {
   bottom: -7px;
   transform: translateX(-50%) rotate(225deg);
 }
+
+/* Conectar con Claude */
+.claude-url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  background: var(--cl-bg-2);
+  border: 1px solid var(--cl-line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--cl-text);
+  word-break: break-all;
+}
+.claude-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.claude-steps { margin: 0; padding-left: 20px; line-height: 1.7; font-size: 0.95rem; color: var(--cl-text); }
+.claude-conn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid var(--cl-line);
+  border-radius: 14px;
+  background: var(--cl-bg-2);
+}
+ol.claude-steps { list-style: decimal; }
