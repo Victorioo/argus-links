@@ -100,7 +100,7 @@ How the comments work: each comment is attached to one element of the page. "sel
 
 Rules:
 - Make the smallest change that satisfies each comment. Do not restyle, reformat, reorder or "improve" anything that was not asked for.
-- Return changes ONLY through the submit_edits tool, as exact search-and-replace edits. Never return the whole document.
+- You MUST respond by calling the submit_edits tool exactly once, even if there is nothing to change (then use empty "edits"). Return changes ONLY through that tool, as exact search-and-replace edits. Never return the whole document.
 - "find" must be copied verbatim from the HTML (same whitespace and quotes) and must occur EXACTLY ONCE in it. Include just enough surrounding text/markup to make it unique, but keep it short.
 - "replace" is what that exact snippet becomes. Keep the document valid HTML.
 - A comment that is a question, praise, opinion, unclear, or would need information you do not have must NOT be guessed at: list it under "skipped" with a short reason.
@@ -204,7 +204,8 @@ export async function editHtmlWithComments(opts: {
         max_tokens: MAX_OUTPUT_TOKENS,
         system: SYSTEM_PROMPT,
         tools: [EDIT_TOOL],
-        tool_choice: { type: "tool", name: EDIT_TOOL.name },
+        // Some models reject a forced tool_choice, so the prompt demands the call.
+        tool_choice: { type: "auto" },
         messages: [{ role: "user", content: buildUserPrompt(masked, opts.comments, opts.instructions) }],
       })
       .finalMessage();
