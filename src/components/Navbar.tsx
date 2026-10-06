@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { ArgusLogo } from "@/components/ArgusLogo";
 import { NotificationBell } from "@/components/NotificationBell";
+import { UploadIcon } from "@/components/Icons";
 import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -20,6 +21,7 @@ export async function Navbar() {
         </span>
         <div className="tb-right">
           <Link href="/reports/new" className="btn btn-primary btn-sm">
+            <UploadIcon />
             Subir reporte
           </Link>
           <ThemeToggle />

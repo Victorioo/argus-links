@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Navbar } from "@/components/Navbar";
 import { NewReportForm } from "@/components/NewReportForm";
+import { ArrowLeftIcon } from "@/components/Icons";
 
 export default async function NewReportPage() {
   const session = await auth();
@@ -15,7 +16,8 @@ export default async function NewReportPage() {
       <Navbar />
       <main className="wrap">
         <Link href="/" className="btn btn-quiet btn-sm" style={{ marginTop: 24 }}>
-          ← Volver
+          <ArrowLeftIcon />
+          Volver
         </Link>
         <section className="hero">
           <span className="eyebrow">Herramienta interna · Equipo Argus</span>

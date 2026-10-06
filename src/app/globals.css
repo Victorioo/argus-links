@@ -817,3 +817,14 @@ footer {
 .claude-card .mono-label,
 .claude-card button,
 .claude-card textarea { font-family: inherit; }
+
+/* icon buttons */
+.btn .ico { flex: none; }
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+}
+.btn-icon.is-done { border-color: var(--teal); color: var(--teal); }

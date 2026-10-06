@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { upload } from "@vercel/blob/client";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { ExternalLinkIcon, EyeIcon, PencilIcon, UploadIcon } from "@/components/Icons";
 import { VisibilityControl, type Visibility } from "@/components/VisibilityControl";
 
 function previewSlug(input: string): string {
@@ -170,12 +171,15 @@ export function NewReportForm() {
         <div className="btn-row">
           <CopyLinkButton path={`/r/${published.slug}`} gold />
           <a href={`/r/${published.slug}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
+            <ExternalLinkIcon />
             Abrir página
           </a>
           <Link href={`/reports/${published.id}`} className="btn btn-quiet">
+            <PencilIcon />
             Editar detalles
           </Link>
           <button type="button" onClick={reset} className="btn btn-quiet">
+            <UploadIcon />
             Subir otro
           </button>
         </div>
@@ -327,6 +331,7 @@ export function NewReportForm() {
               onClick={() => setShowPreview((v) => !v)}
               className="btn btn-ghost btn-sm"
             >
+              <EyeIcon />
               {showPreview ? "Ocultar vista previa" : "Ver vista previa"}
             </button>
             {showPreview && (

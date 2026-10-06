@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { EyeIcon, TrashIcon } from "@/components/Icons";
 import { VisibilityControl, type Visibility } from "@/components/VisibilityControl";
 
 export type CommentItem = {
@@ -269,6 +270,7 @@ export function EditReportForm({
               onClick={() => setShowPreview((v) => !v)}
               className="btn btn-ghost btn-sm"
             >
+              <EyeIcon />
               {showPreview ? "Ocultar vista previa" : "Ver vista previa de la nueva versión"}
             </button>
             {showPreview && (
@@ -288,6 +290,7 @@ export function EditReportForm({
             {pending ? "Guardando..." : "Guardar cambios"}
           </button>
           <button type="button" onClick={handleDelete} disabled={deleting} className="btn btn-danger btn-sm">
+            <TrashIcon />
             {deleting ? "Eliminando..." : "Eliminar reporte"}
           </button>
         </div>
@@ -318,6 +321,7 @@ export function EditReportForm({
                       disabled={deletingCommentId === c.id}
                       className="btn btn-danger btn-sm"
                     >
+                      <TrashIcon size={14} />
                       {deletingCommentId === c.id ? "Borrando..." : "Borrar"}
                     </button>
                   </div>

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { PencilIcon } from "@/components/Icons";
 
 export type ReportListItem = {
   id: string;
@@ -101,9 +102,14 @@ export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
                 </div>
               </div>
               <div className="btns">
-                <CopyLinkButton path={`/r/${r.slug}`} />
-                <Link href={`/reports/${r.id}`} className="btn btn-quiet btn-sm">
-                  Editar
+                <CopyLinkButton path={`/r/${r.slug}`} iconOnly />
+                <Link
+                  href={`/reports/${r.id}`}
+                  className="btn btn-quiet btn-sm btn-icon"
+                  title="Editar"
+                  aria-label="Editar"
+                >
+                  <PencilIcon />
                 </Link>
               </div>
             </div>

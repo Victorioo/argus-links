@@ -1,8 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { CheckIcon, CopyIcon } from "@/components/Icons";
 
-export function CopyLinkButton({ path, gold = false }: { path: string; gold?: boolean }) {
+export function CopyLinkButton({
+  path,
+  gold = false,
+  iconOnly = false,
+}: {
+  path: string;
+  gold?: boolean;
+  iconOnly?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -16,13 +25,17 @@ export function CopyLinkButton({ path, gold = false }: { path: string; gold?: bo
     }
   }
 
+  const label = copied ? "¡Copiado!" : "Copiar link";
+
   return (
     <button
       type="button"
       onClick={handleCopy}
-      className={`btn btn-sm ${gold ? "btn-gold" : "btn-quiet"}`}
+      className={`btn btn-sm ${gold ? "btn-gold" : "btn-quiet"}${iconOnly ? " btn-icon" : ""}${copied ? " is-done" : ""}`}
+      {...(iconOnly ? { title: label, "aria-label": label } : {})}
     >
-      {copied ? "¡Copiado!" : "Copiar link"}
+      {copied ? <CheckIcon /> : <CopyIcon />}
+      {!iconOnly && label}
     </button>
   );
 }
