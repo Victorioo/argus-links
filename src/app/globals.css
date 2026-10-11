@@ -535,17 +535,20 @@ h2 {
   content: "";
   position: absolute;
   z-index: -1;
-  inset: -40px -6vw auto -6vw;
-  height: 380px;
+  top: -40px;
+  left: 50%;
+  width: 100vw; /* full bleed: the glow fades out by itself, no visible box edge */
+  height: 420px;
+  transform: translateX(-50%);
   pointer-events: none;
   background:
-    radial-gradient(520px 260px at 12% 30%, rgba(139, 92, 246, 0.28), transparent 70%),
-    radial-gradient(420px 220px at 78% 20%, rgba(240, 185, 77, 0.14), transparent 70%);
+    radial-gradient(560px 280px at 26% 32%, rgba(139, 92, 246, 0.28), transparent 70%),
+    radial-gradient(460px 240px at 74% 22%, rgba(240, 185, 77, 0.14), transparent 70%);
 }
 [data-theme="light"] .home-head::before {
   background:
-    radial-gradient(520px 260px at 12% 30%, rgba(139, 92, 246, 0.16), transparent 70%),
-    radial-gradient(420px 220px at 78% 20%, rgba(240, 185, 77, 0.14), transparent 70%);
+    radial-gradient(560px 280px at 26% 32%, rgba(139, 92, 246, 0.16), transparent 70%),
+    radial-gradient(460px 240px at 74% 22%, rgba(240, 185, 77, 0.14), transparent 70%);
 }
 .home-title { font-size: clamp(2.1rem, 4.2vw, 2.85rem); max-width: none; letter-spacing: -0.015em; }
 .home-head .lead { margin-top: 14px; font-size: 1.05rem; }
