@@ -19,6 +19,8 @@ export default async function DashboardPage() {
     },
   });
 
+  const firstName = session.user.name?.trim().split(/\s+/)[0] || "equipo";
+
   const items: ReportListItem[] = reports.map((r) => ({
     id: r.id,
     slug: r.slug,
@@ -38,14 +40,11 @@ export default async function DashboardPage() {
     <>
       <Navbar />
       <main className="wrap">
-        <section className="hero">
-          <span className="eyebrow">Herramienta interna · Equipo Argus</span>
-          <h1>
-            Subí el HTML. <em>Entregá el link.</em>
-          </h1>
+        <section className="home-head">
+          <h1 className="home-title">Hola, {firstName}</h1>
           <p className="lead">
-            Reportes del equipo en un solo lugar, con dueño y versión. Si actualizás un
-            reporte, el link que ya compartiste <b>no cambia</b>.
+            Los reportes del equipo, en un solo lugar. El link de cada reporte{" "}
+            <b>no cambia</b> cuando lo actualizás.
           </p>
         </section>
         <ReportsBrowser reports={items} />

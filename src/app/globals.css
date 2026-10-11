@@ -530,7 +530,11 @@ h2 {
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
 /* lista */
-.list { margin-top: 54px; }
+.home-head { padding: 36px 0 8px; }
+.home-title { font-size: clamp(1.7rem, 3.4vw, 2.2rem); max-width: none; letter-spacing: -0.015em; }
+.home-head .lead { margin-top: 8px; font-size: 0.98rem; }
+.list { margin-top: 28px; }
+.list-upload { margin-left: auto; }
 .list-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
 .list-head .search { margin-left: auto; width: min(320px, 100%); }
 .rows { display: flex; flex-direction: column; gap: 10px; }

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
-import { PencilIcon } from "@/components/Icons";
+import { PencilIcon, UploadIcon } from "@/components/Icons";
 
 export type ReportListItem = {
   id: string;
@@ -80,6 +80,10 @@ export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
       <div className="list-head">
         <h2>Reportes publicados</h2>
         <span className="chip v">{reports.length}</span>
+        <Link href="/reports/new" className="btn btn-primary btn-sm list-upload">
+          <UploadIcon />
+          Subir reporte
+        </Link>
       </div>
 
       <div className="list-toolbar">
