@@ -6,6 +6,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isValidSlug, slugify } from "@/lib/slug";
+import { canonicalClient } from "@/lib/clients";
 
 export const maxDuration = 300;
 
@@ -241,7 +242,7 @@ export async function POST(req: Request) {
         title,
         slug,
         description: description || null,
-        client: client || null,
+        client: await canonicalClient(client),
         period: period || null,
         html: htmlText,
         sizeBytes: htmlBytes + totalAssetBytes,

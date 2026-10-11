@@ -22,6 +22,11 @@ export type ReportListItem = {
 
 const NO_CLIENT = "Sin cliente";
 const ALL = "";
+const NONE = "__none__";
+const INTERNAL_CLIENT = "argus";
+
+// Clients are free text, so "Argus", "argus " and "ARGUS" must be one client.
+const clientKey = (c: string | null) => c?.trim().toLowerCase() || NONE;
 
 function visibilityLabel(v: ReportListItem["visibility"]) {
   if (v === "PASSWORD") return "🔒 Con contraseña";
@@ -37,7 +42,7 @@ function formatDate(iso: string) {
   });
 }
 
-export type HomeStats = { mine: number; pendingMine: number; noClient: number };
+export type HomeStats = { mine: number; pendingMine: number; internal: number };
 
 export function ReportsBrowser({
   reports,
@@ -57,7 +62,7 @@ export function ReportsBrowser({
   const cardActive = {
     mine: mineOnly && !onlyPending && clientFilter === ALL,
     comments: mineOnly && onlyPending,
-    noClient: clientFilter === NO_CLIENT && !mineOnly && !onlyPending,
+    internal: clientFilter === INTERNAL_CLIENT && !mineOnly && !onlyPending,
   };
   function applyCard(card: keyof typeof cardActive) {
     if (cardActive[card]) {
@@ -66,9 +71,9 @@ export function ReportsBrowser({
       setClientFilter(ALL);
       return;
     }
-    setMineOnly(card !== "noClient");
+    setMineOnly(card !== "internal");
     setOnlyPending(card === "comments");
-    setClientFilter(card === "noClient" ? NO_CLIENT : ALL);
+    setClientFilter(card === "internal" ? INTERNAL_CLIENT : ALL);
     // The filtered list sits below the cards; make the change visible.
     listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -79,15 +84,17 @@ export function ReportsBrowser({
   );
 
   const clientOptions = useMemo(() => {
-    const counts = new Map<string, number>();
+    const byKey = new Map<string, { label: string; count: number }>();
     for (const r of reports) {
-      const key = r.client?.trim() || NO_CLIENT;
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      const key = clientKey(r.client);
+      const entry = byKey.get(key);
+      if (entry) entry.count += 1;
+      else byKey.set(key, { label: key === NONE ? NO_CLIENT : r.client!.trim(), count: 1 });
     }
-    return [...counts.entries()].sort(([a], [b]) => {
-      if (a === NO_CLIENT) return 1;
-      if (b === NO_CLIENT) return -1;
-      return a.localeCompare(b, "es");
+    return [...byKey.entries()].sort(([ka, a], [kb, b]) => {
+      if (ka === NONE) return 1;
+      if (kb === NONE) return -1;
+      return a.label.localeCompare(b.label, "es");
     });
   }, [reports]);
 
@@ -96,7 +103,7 @@ export function ReportsBrowser({
     return reports.filter((r) => {
       if (mineOnly && !r.isMine) return false;
       if (onlyPending && r.pendingComments === 0) return false;
-      if (clientFilter !== ALL && (r.client?.trim() || NO_CLIENT) !== clientFilter) return false;
+      if (clientFilter !== ALL && clientKey(r.client) !== clientFilter) return false;
       if (!q) return true;
       return (
         r.title.toLowerCase().includes(q) ||
@@ -117,10 +124,10 @@ export function ReportsBrowser({
       hint: "sin resolver",
     },
     {
-      key: "noClient" as const,
-      value: stats.noClient,
-      label: "Sin cliente asignado",
-      hint: "del equipo, para completar",
+      key: "internal" as const,
+      value: stats.internal,
+      label: "Reportes internos de Argus",
+      hint: "del equipo",
     },
   ];
 
@@ -169,9 +176,9 @@ export function ReportsBrowser({
           className="input client-select"
         >
           <option value={ALL}>Todos los clientes</option>
-          {clientOptions.map(([name, count]) => (
-            <option key={name} value={name}>
-              {name} ({count})
+          {clientOptions.map(([key, { label, count }]) => (
+            <option key={key} value={key}>
+              {label} ({count})
             </option>
           ))}
         </select>

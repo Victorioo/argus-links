@@ -4,6 +4,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isValidSlug, slugify } from "@/lib/slug";
+import { canonicalClient } from "@/lib/clients";
 
 const MAX_HTML_BYTES = 4 * 1024 * 1024; // stay under Vercel's serverless body limit
 
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
       title,
       slug,
       description: description || null,
-      client: client || null,
+      client: await canonicalClient(client),
       period: period || null,
       html,
       sizeBytes,

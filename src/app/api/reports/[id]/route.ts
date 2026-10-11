@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isValidSlug, slugify } from "@/lib/slug";
+import { canonicalClient } from "@/lib/clients";
 
 const MAX_HTML_BYTES = 4 * 1024 * 1024;
 
@@ -58,7 +59,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   if (parsed.data.title !== undefined) data.title = parsed.data.title;
   if (parsed.data.description !== undefined) data.description = parsed.data.description || null;
-  if (parsed.data.client !== undefined) data.client = parsed.data.client || null;
+  if (parsed.data.client !== undefined) data.client = await canonicalClient(parsed.data.client);
   if (parsed.data.period !== undefined) data.period = parsed.data.period || null;
   if (parsed.data.allowComments !== undefined) data.allowComments = parsed.data.allowComments;
 

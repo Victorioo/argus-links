@@ -556,7 +556,7 @@ h2 {
 @media (max-width: 640px) { .stat-cards { grid-template-columns: 1fr; gap: 10px; } }
 .stat-mine { --accent: var(--violet-400); }
 .stat-comments { --accent: var(--gold); }
-.stat-noClient { --accent: var(--teal); }
+.stat-internal { --accent: var(--teal); }
 .stat-card {
   display: block;
   width: 100%;
