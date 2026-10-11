@@ -37,7 +37,7 @@ function formatDate(iso: string) {
   });
 }
 
-export type HomeStats = { mine: number; pendingMine: number; viewsMine: number };
+export type HomeStats = { mine: number; pendingMine: number; noClient: number };
 
 export function ReportsBrowser({
   reports,
@@ -51,25 +51,24 @@ export function ReportsBrowser({
   const [clientFilter, setClientFilter] = useState(ALL);
   const listRef = useRef<HTMLElement>(null);
   const [mineOnly, setMineOnly] = useState(false);
-  const [sortByViews, setSortByViews] = useState(false);
 
   // The three cards are presets over these filters. Tapping the one that is
   // already active clears them.
   const cardActive = {
-    mine: mineOnly && !onlyPending && !sortByViews,
-    comments: mineOnly && onlyPending && !sortByViews,
-    views: mineOnly && sortByViews && !onlyPending,
+    mine: mineOnly && !onlyPending && clientFilter === ALL,
+    comments: mineOnly && onlyPending,
+    noClient: clientFilter === NO_CLIENT && !mineOnly && !onlyPending,
   };
   function applyCard(card: keyof typeof cardActive) {
     if (cardActive[card]) {
       setMineOnly(false);
       setOnlyPending(false);
-      setSortByViews(false);
+      setClientFilter(ALL);
       return;
     }
-    setMineOnly(true);
+    setMineOnly(card !== "noClient");
     setOnlyPending(card === "comments");
-    setSortByViews(card === "views");
+    setClientFilter(card === "noClient" ? NO_CLIENT : ALL);
     // The filtered list sits below the cards; make the change visible.
     listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -94,7 +93,7 @@ export function ReportsBrowser({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = reports.filter((r) => {
+    return reports.filter((r) => {
       if (mineOnly && !r.isMine) return false;
       if (onlyPending && r.pendingComments === 0) return false;
       if (clientFilter !== ALL && (r.client?.trim() || NO_CLIENT) !== clientFilter) return false;
@@ -107,8 +106,7 @@ export function ReportsBrowser({
         r.createdByName.toLowerCase().includes(q)
       );
     });
-    return sortByViews ? [...list].sort((a, b) => b.views - a.views) : list;
-  }, [reports, query, onlyPending, clientFilter, mineOnly, sortByViews]);
+  }, [reports, query, onlyPending, clientFilter, mineOnly]);
 
   const cards = [
     { key: "mine" as const, value: stats.mine, label: "Mis reportes", hint: "publicados por vos" },
@@ -119,7 +117,12 @@ export function ReportsBrowser({
       hint: "sin resolver",
       attention: stats.pendingMine > 0,
     },
-    { key: "views" as const, value: stats.viewsMine, label: "Vistas en mis reportes", hint: "en total" },
+    {
+      key: "noClient" as const,
+      value: stats.noClient,
+      label: "Sin cliente asignado",
+      hint: "del equipo, para completar",
+    },
   ];
 
   return (

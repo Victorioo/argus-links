@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   const stats = {
     mine: mine.length,
     pendingMine: mine.reduce((n, r) => n + r._count.comments, 0),
-    viewsMine: mine.reduce((n, r) => n + r.views, 0),
+    noClient: reports.filter((r) => !r.client?.trim()).length,
   };
 
   const items: ReportListItem[] = reports.map((r) => ({
