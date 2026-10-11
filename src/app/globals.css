@@ -530,11 +530,11 @@ h2 {
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
 /* lista */
-.home-head { padding: 36px 0 8px; }
-.home-title { font-size: clamp(1.7rem, 3.4vw, 2.2rem); max-width: none; letter-spacing: -0.015em; }
-.home-head .lead { margin-top: 8px; font-size: 0.98rem; }
-.stat-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 8px; }
-@media (max-width: 640px) { .stat-cards { grid-template-columns: 1fr; } }
+.home-head { padding: 60px 0 14px; }
+.home-title { font-size: clamp(2.1rem, 4.2vw, 2.85rem); max-width: none; letter-spacing: -0.015em; }
+.home-head .lead { margin-top: 14px; font-size: 1.05rem; }
+.stat-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+@media (max-width: 640px) { .stat-cards { grid-template-columns: 1fr; gap: 10px; } }
 .stat-card {
   display: block;
   width: 100%;
@@ -545,7 +545,7 @@ h2 {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  padding: 16px 18px 15px;
+  padding: 24px 24px 22px;
   transition: border-color 0.2s, background 0.2s, transform 0.15s;
 }
 .stat-card:hover { border-color: var(--violet-700); transform: translateY(-1px); }
@@ -556,14 +556,20 @@ h2 {
   font-family: var(--font-inter), system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: 2rem;
+  font-size: 2.6rem;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 .stat-value.attention { color: var(--gold); }
-.stat-label { display: block; margin-top: 10px; font-weight: 600; font-size: 0.9rem; }
+.stat-label { display: block; margin-top: 14px; font-weight: 600; font-size: 0.95rem; }
 .stat-hint { display: block; margin-top: 2px; font-size: 0.8rem; color: var(--text-faint); }
-.list { margin-top: 28px; }
+.list { margin-top: 44px; }
+@media (max-width: 640px) {
+  .home-head { padding: 36px 0 10px; }
+  .stat-card { padding: 14px 18px; }
+  .stat-value { font-size: 1.9rem; }
+  .stat-label { margin-top: 8px; }
+}
 .list-upload { margin-left: auto; }
 .list-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
 .list-head .search { margin-left: auto; width: min(320px, 100%); }
