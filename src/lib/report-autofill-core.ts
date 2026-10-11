@@ -72,6 +72,12 @@ export function defaultPeriodLabel(month: number, year: number): string {
   return `${monthName(month)} ${year}`;
 }
 
+// Names lifted from a <title> tend to carry stray punctuation ("melt,").
+export function cleanClientName(name: string | null | undefined): string | null {
+  const clean = name?.replace(/^[\s,;:.\-–—|·]+|[\s,;:.\-–—|·]+$/g, "").replace(/\s+/g, " ");
+  return clean ? clean : null;
+}
+
 // Matches a model-provided client against the clients that already exist,
 // ignoring case, accents and spacing, so the same account is never split.
 export function matchKnownClient(client: string | null, known: string[]): string | null {

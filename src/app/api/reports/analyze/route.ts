@@ -61,15 +61,19 @@ export async function POST(req: Request) {
   try {
     const suggestion = await suggestReportData({ html, knownClients: await listKnownClients() });
 
-    await prisma.aiRun.create({
-      data: {
-        userId,
-        kind: "autofill",
-        model: AUTOFILL_MODEL,
-        inputTokens: suggestion.usage.inputTokens,
-        outputTokens: suggestion.usage.outputTokens,
-      },
-    });
+    // Claude already answered (and was charged): failing to log it must not
+    // take the result away from the person.
+    await prisma.aiRun
+      .create({
+        data: {
+          userId,
+          kind: "autofill",
+          model: AUTOFILL_MODEL,
+          inputTokens: suggestion.usage.inputTokens,
+          outputTokens: suggestion.usage.outputTokens,
+        },
+      })
+      .catch((err) => console.error("could not log autofill usage", err));
 
     return NextResponse.json({
       title: suggestion.title,
@@ -77,7 +81,7 @@ export async function POST(req: Request) {
       client: suggestion.client,
       period: suggestion.period,
       internal: suggestion.internal,
-      slug: await freeSlug(suggestion.slug),
+      slug: suggestion.slug ? await freeSlug(suggestion.slug) : null,
     });
   } catch (err) {
     if (err instanceof AiError) {
