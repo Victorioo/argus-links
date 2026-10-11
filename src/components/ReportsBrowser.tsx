@@ -115,7 +115,6 @@ export function ReportsBrowser({
       value: stats.pendingMine,
       label: "Comentarios en mis reportes",
       hint: "sin resolver",
-      attention: stats.pendingMine > 0,
     },
     {
       key: "noClient" as const,
@@ -134,9 +133,9 @@ export function ReportsBrowser({
           type="button"
           onClick={() => applyCard(c.key)}
           aria-pressed={cardActive[c.key]}
-          className={`stat-card${cardActive[c.key] ? " on" : ""}`}
+          className={`stat-card stat-${c.key}${cardActive[c.key] ? " on" : ""}`}
         >
-          <span className={`stat-value${c.attention ? " attention" : ""}`}>
+          <span className="stat-value">
             {c.value.toLocaleString("es-AR")}
           </span>
           <span className="stat-label">{c.label}</span>

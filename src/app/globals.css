@@ -530,11 +530,30 @@ h2 {
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
 /* lista */
-.home-head { padding: 60px 0 14px; }
+.home-head { position: relative; padding: 60px 0 14px; }
+.home-head::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -40px -6vw auto -6vw;
+  height: 380px;
+  pointer-events: none;
+  background:
+    radial-gradient(520px 260px at 12% 30%, rgba(139, 92, 246, 0.28), transparent 70%),
+    radial-gradient(420px 220px at 78% 20%, rgba(240, 185, 77, 0.14), transparent 70%);
+}
+[data-theme="light"] .home-head::before {
+  background:
+    radial-gradient(520px 260px at 12% 30%, rgba(139, 92, 246, 0.16), transparent 70%),
+    radial-gradient(420px 220px at 78% 20%, rgba(240, 185, 77, 0.14), transparent 70%);
+}
 .home-title { font-size: clamp(2.1rem, 4.2vw, 2.85rem); max-width: none; letter-spacing: -0.015em; }
 .home-head .lead { margin-top: 14px; font-size: 1.05rem; }
 .stat-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
 @media (max-width: 640px) { .stat-cards { grid-template-columns: 1fr; gap: 10px; } }
+.stat-mine { --accent: var(--violet-400); }
+.stat-comments { --accent: var(--gold); }
+.stat-noClient { --accent: var(--teal); }
 .stat-card {
   display: block;
   width: 100%;
@@ -542,14 +561,18 @@ h2 {
   font: inherit;
   color: inherit;
   cursor: pointer;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface) 65%);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line));
   border-radius: var(--r-lg);
   padding: 24px 24px 22px;
   transition: border-color 0.2s, background 0.2s, transform 0.15s;
 }
-.stat-card:hover { border-color: var(--violet-700); transform: translateY(-1px); }
-.stat-card.on { border-color: var(--violet-500); background: rgba(139, 92, 246, 0.12); }
+.stat-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.stat-card.on {
+  border-color: var(--accent);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 26%, var(--surface)), var(--surface) 75%);
+  box-shadow: 0 10px 30px -14px var(--accent);
+}
 .stat-card:focus-visible { outline: 2px solid var(--violet-500); outline-offset: 2px; }
 .stat-value {
   display: block;
@@ -560,7 +583,8 @@ h2 {
   line-height: 1;
   letter-spacing: -0.025em;
 }
-.stat-value.attention { color: var(--gold); }
+.stat-value { color: var(--accent); }
+[data-theme="light"] .stat-value { color: color-mix(in srgb, var(--accent) 55%, #1b1530); }
 .stat-label { display: block; margin-top: 14px; font-weight: 600; font-size: 0.95rem; }
 .stat-hint { display: block; margin-top: 2px; font-size: 0.8rem; color: var(--text-faint); }
 .list { margin-top: 44px; }

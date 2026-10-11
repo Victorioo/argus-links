@@ -49,7 +49,9 @@ export default async function DashboardPage() {
       <Navbar />
       <main className="wrap">
         <section className="home-head">
-          <h1 className="home-title">Hola, {firstName}</h1>
+          <h1 className="home-title">
+            Hola, <em>{firstName}</em>
+          </h1>
           <p className="lead">
             Los reportes del equipo, en un solo lugar. El link de cada reporte{" "}
             <b>no cambia</b> cuando lo actualizás.
