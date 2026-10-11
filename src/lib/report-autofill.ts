@@ -16,6 +16,8 @@ export { aiEnabled };
 // does the job in about the same time. Override with ANTHROPIC_AUTOFILL_MODEL.
 export const AUTOFILL_MODEL = process.env.ANTHROPIC_AUTOFILL_MODEL || AI_MODEL;
 export const AUTOFILL_DAILY_LIMIT = Number(process.env.AI_AUTOFILL_DAILY_LIMIT) || 60;
+// Classifying the reports that already exist is a one-off batch of dozens, so it gets its own, larger limit.
+export const CLASSIFY_DAILY_LIMIT = Number(process.env.AI_CLASSIFY_DAILY_LIMIT) || 150;
 
 const SYSTEM_PROMPT = `You read a client report written by a performance-marketing (PPC) agency, Argus PPC, and work out the data needed to file it.
 

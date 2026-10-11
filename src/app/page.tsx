@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { aiEnabled } from "@/lib/claude-edit";
 import { Navbar } from "@/components/Navbar";
 import { ReportsBrowser, type ReportListItem } from "@/components/ReportsBrowser";
 
@@ -27,6 +29,8 @@ export default async function DashboardPage() {
     pendingMine: mine.reduce((n, r) => n + r._count.comments, 0),
     internal: reports.filter((r) => r.internal).length,
   };
+
+  const unclassified = reports.filter((r) => !r.client?.trim() && !r.internal).length;
 
   const items: ReportListItem[] = reports.map((r) => ({
     id: r.id,
@@ -57,6 +61,12 @@ export default async function DashboardPage() {
             Los reportes del equipo, en un solo lugar. El link de cada reporte{" "}
             <b>no cambia</b> cuando lo actualizás.
           </p>
+          {unclassified > 0 && aiEnabled() && (
+            <Link href="/reports/classify" className="classify-link">
+              <span className="spark" aria-hidden="true">✦</span>
+              {unclassified} {unclassified === 1 ? "reporte sin cliente" : "reportes sin cliente"} · Clasificar con Claude →
+            </Link>
+          )}
         </section>
         <ReportsBrowser reports={items} stats={stats} />
       </main>
