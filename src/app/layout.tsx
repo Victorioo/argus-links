@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Report Hub",
+  title: "Argus PPC - Reportes",
   description: "Repositorio interno de reportes HTML del equipo",
 };
 
