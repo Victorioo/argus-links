@@ -14,9 +14,8 @@ export type ReportListItem = {
   period: string | null;
   pendingComments: number;
   views: number;
-  updatedAt: string;
+  createdAt: string;
   createdByName: string;
-  updatedByName: string | null;
   visibility: "PUBLIC" | "PASSWORD" | "RESTRICTED";
 };
 
@@ -147,8 +146,8 @@ export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
                 </div>
                 {r.description && <div className="desc">{r.description}</div>}
                 <div className="meta">
-                  <span>{r.updatedByName ?? r.createdByName}</span>
-                  <span>{formatDate(r.updatedAt)}</span>
+                  <span>{r.createdByName}</span>
+                  <span>{formatDate(r.createdAt)}</span>
                   <span>{r.views} vistas</span>
                 </div>
               </div>

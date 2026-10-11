@@ -11,10 +11,9 @@ export default async function DashboardPage() {
   }
 
   const reports = await prisma.report.findMany({
-    orderBy: { updatedAt: "desc" },
+    orderBy: { createdAt: "desc" },
     include: {
       createdBy: { select: { name: true } },
-      updatedBy: { select: { name: true } },
       // Top-level comments still waiting for someone to deal with them
       _count: { select: { comments: { where: { resolved: false, parentId: null } } } },
     },
@@ -30,9 +29,8 @@ export default async function DashboardPage() {
     pendingComments: r._count.comments,
     sizeBytes: r.sizeBytes,
     views: r.views,
-    updatedAt: r.updatedAt.toISOString(),
+    createdAt: r.createdAt.toISOString(),
     createdByName: r.createdBy?.name ?? "Cuenta eliminada",
-    updatedByName: r.updatedBy?.name ?? null,
     visibility: r.visibility,
   }));
 
