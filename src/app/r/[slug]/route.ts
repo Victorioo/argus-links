@@ -42,8 +42,13 @@ export async function GET(
   const gate = await checkReportAccess(report, req, slug);
   if (!gate.ok) return gate.response;
 
+  // updatedAt is @updatedAt, so any update would stamp "now" on it. Pin it to
+  // its current value: opening a report is not an edit.
   prisma.report
-    .update({ where: { id: report.id }, data: { views: { increment: 1 } } })
+    .update({
+      where: { id: report.id },
+      data: { views: { increment: 1 }, updatedAt: report.updatedAt },
+    })
     .catch(() => {});
 
   let html = withBaseHref(report.html, report.slug);

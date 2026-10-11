@@ -29,14 +29,7 @@ function visibilityLabel(v: ReportListItem["visibility"]) {
   return null;
 }
 
-function timeAgo(iso: string) {
-  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (mins < 1) return "recién";
-  if (mins < 60) return `hace ${mins} min`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `hace ${hours} h`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `hace ${days} ${days === 1 ? "día" : "días"}`;
+function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-AR", {
     day: "2-digit",
     month: "2-digit",
@@ -155,7 +148,7 @@ export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
                 {r.description && <div className="desc">{r.description}</div>}
                 <div className="meta">
                   <span>{r.updatedByName ?? r.createdByName}</span>
-                  <span>{timeAgo(r.updatedAt)}</span>
+                  <span>{formatDate(r.updatedAt)}</span>
                   <span>{r.views} vistas</span>
                 </div>
               </div>
