@@ -18,6 +18,7 @@ export default auth((req) => {
     pathname === "/api/oauth/register" ||
     pathname.startsWith("/api/verify/") ||
     pathname === "/comment-overlay.js" ||
+    pathname === "/icon.svg" ||
     pathname.startsWith("/r/") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/register") ||
