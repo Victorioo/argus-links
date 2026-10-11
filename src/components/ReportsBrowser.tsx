@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { PencilIcon, UploadIcon } from "@/components/Icons";
@@ -13,6 +13,7 @@ export type ReportListItem = {
   client: string | null;
   period: string | null;
   pendingComments: number;
+  isMine: boolean;
   views: number;
   createdAt: string;
   createdByName: string;
@@ -36,10 +37,42 @@ function formatDate(iso: string) {
   });
 }
 
-export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
+export type HomeStats = { mine: number; pendingMine: number; viewsMine: number };
+
+export function ReportsBrowser({
+  reports,
+  stats,
+}: {
+  reports: ReportListItem[];
+  stats: HomeStats;
+}) {
   const [query, setQuery] = useState("");
   const [onlyPending, setOnlyPending] = useState(false);
   const [clientFilter, setClientFilter] = useState(ALL);
+  const listRef = useRef<HTMLElement>(null);
+  const [mineOnly, setMineOnly] = useState(false);
+  const [sortByViews, setSortByViews] = useState(false);
+
+  // The three cards are presets over these filters. Tapping the one that is
+  // already active clears them.
+  const cardActive = {
+    mine: mineOnly && !onlyPending && !sortByViews,
+    comments: mineOnly && onlyPending && !sortByViews,
+    views: mineOnly && sortByViews && !onlyPending,
+  };
+  function applyCard(card: keyof typeof cardActive) {
+    if (cardActive[card]) {
+      setMineOnly(false);
+      setOnlyPending(false);
+      setSortByViews(false);
+      return;
+    }
+    setMineOnly(true);
+    setOnlyPending(card === "comments");
+    setSortByViews(card === "views");
+    // The filtered list sits below the cards; make the change visible.
+    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   const pendingTotal = useMemo(
     () => reports.filter((r) => r.pendingComments > 0).length,
@@ -61,7 +94,8 @@ export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return reports.filter((r) => {
+    const list = reports.filter((r) => {
+      if (mineOnly && !r.isMine) return false;
       if (onlyPending && r.pendingComments === 0) return false;
       if (clientFilter !== ALL && (r.client?.trim() || NO_CLIENT) !== clientFilter) return false;
       if (!q) return true;
@@ -73,10 +107,42 @@ export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
         r.createdByName.toLowerCase().includes(q)
       );
     });
-  }, [reports, query, onlyPending, clientFilter]);
+    return sortByViews ? [...list].sort((a, b) => b.views - a.views) : list;
+  }, [reports, query, onlyPending, clientFilter, mineOnly, sortByViews]);
+
+  const cards = [
+    { key: "mine" as const, value: stats.mine, label: "Mis reportes", hint: "publicados por vos" },
+    {
+      key: "comments" as const,
+      value: stats.pendingMine,
+      label: "Comentarios en mis reportes",
+      hint: "sin resolver",
+      attention: stats.pendingMine > 0,
+    },
+    { key: "views" as const, value: stats.viewsMine, label: "Vistas en mis reportes", hint: "en total" },
+  ];
 
   return (
-    <section className="list">
+    <>
+    <div className="stat-cards">
+      {cards.map((c) => (
+        <button
+          key={c.key}
+          type="button"
+          onClick={() => applyCard(c.key)}
+          aria-pressed={cardActive[c.key]}
+          className={`stat-card${cardActive[c.key] ? " on" : ""}`}
+        >
+          <span className={`stat-value${c.attention ? " attention" : ""}`}>
+            {c.value.toLocaleString("es-AR")}
+          </span>
+          <span className="stat-label">{c.label}</span>
+          <span className="stat-hint">{c.hint}</span>
+        </button>
+      ))}
+    </div>
+
+    <section className="list" ref={listRef} style={{ scrollMarginTop: 80 }}>
       <div className="list-head">
         <h2>Reportes publicados</h2>
         <span className="chip v">{reports.length}</span>
@@ -171,5 +237,6 @@ export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
         </div>
       )}
     </section>
+    </>
   );
 }

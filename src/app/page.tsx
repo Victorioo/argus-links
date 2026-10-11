@@ -22,20 +22,11 @@ export default async function DashboardPage() {
   const firstName = session.user.name?.trim().split(/\s+/)[0] || "equipo";
 
   const mine = reports.filter((r) => r.createdById === session.user.id);
-  const stats = [
-    { value: mine.length, label: "Mis reportes", hint: "publicados por vos" },
-    {
-      value: mine.reduce((n, r) => n + r._count.comments, 0),
-      label: "Comentarios en mis reportes",
-      hint: "sin resolver",
-      attention: true,
-    },
-    {
-      value: mine.reduce((n, r) => n + r.views, 0),
-      label: "Vistas en mis reportes",
-      hint: "en total",
-    },
-  ];
+  const stats = {
+    mine: mine.length,
+    pendingMine: mine.reduce((n, r) => n + r._count.comments, 0),
+    viewsMine: mine.reduce((n, r) => n + r.views, 0),
+  };
 
   const items: ReportListItem[] = reports.map((r) => ({
     id: r.id,
@@ -45,6 +36,7 @@ export default async function DashboardPage() {
     client: r.client,
     period: r.period,
     pendingComments: r._count.comments,
+    isMine: r.createdById === session.user.id,
     sizeBytes: r.sizeBytes,
     views: r.views,
     createdAt: r.createdAt.toISOString(),
@@ -62,19 +54,8 @@ export default async function DashboardPage() {
             Los reportes del equipo, en un solo lugar. El link de cada reporte{" "}
             <b>no cambia</b> cuando lo actualizás.
           </p>
-          <div className="stat-cards">
-            {stats.map((s) => (
-              <div key={s.label} className="stat-card">
-                <div className={`stat-value${s.attention && s.value > 0 ? " attention" : ""}`}>
-                  {s.value.toLocaleString("es-AR")}
-                </div>
-                <div className="stat-label">{s.label}</div>
-                <div className="stat-hint">{s.hint}</div>
-              </div>
-            ))}
-          </div>
         </section>
-        <ReportsBrowser reports={items} />
+        <ReportsBrowser reports={items} stats={stats} />
       </main>
     </>
   );

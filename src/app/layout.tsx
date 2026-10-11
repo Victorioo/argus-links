@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { Raleway, JetBrains_Mono } from "next/font/google";
+import { Raleway, JetBrains_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
 const raleway = Raleway({
   variable: "--font-raleway",
+  subsets: ["latin"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -25,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="es"
       data-theme="dark"
       suppressHydrationWarning
-      className={`${raleway.variable} ${jetbrainsMono.variable}`}
+      className={`${raleway.variable} ${jetbrainsMono.variable} ${inter.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
