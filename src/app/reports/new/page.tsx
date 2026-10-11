@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { NewReportForm } from "@/components/NewReportForm";
 import { ArrowLeftIcon } from "@/components/Icons";
 import { listKnownClients } from "@/lib/clients";
+import { aiEnabled } from "@/lib/claude-edit";
 
 export default async function NewReportPage() {
   const session = await auth();
@@ -32,7 +33,7 @@ export default async function NewReportPage() {
             volvés a subir uno con el mismo link, el link no cambia.
           </p>
         </section>
-        <NewReportForm knownClients={knownClients} />
+        <NewReportForm knownClients={knownClients} aiEnabled={aiEnabled()} />
       </main>
     </>
   );

@@ -27,7 +27,32 @@ function formatSize(bytes: number) {
 
 type Published = { id: string; slug: string };
 
-export function NewReportForm({ knownClients }: { knownClients: string[] }) {
+// A .zip can be big; reading its index.html in the browser is only worth it up to here.
+const MAX_ZIP_FOR_AUTOFILL = 60 * 1024 * 1024;
+
+type AiNote = { kind: "ok" | "error"; text: string };
+
+// The page Claude should read in a .zip: index.html, or the shallowest .html.
+async function readZipEntryHtml(file: File): Promise<string | null> {
+  const JSZip = (await import("jszip")).default;
+  const zip = await JSZip.loadAsync(file);
+  const pages = Object.values(zip.files)
+    .filter((f) => !f.dir && /\.html?$/i.test(f.name) && !f.name.startsWith("__MACOSX/"))
+    .sort((a, b) => {
+      const ai = /(^|\/)index\.html?$/i.test(a.name) ? 0 : 1;
+      const bi = /(^|\/)index\.html?$/i.test(b.name) ? 0 : 1;
+      return ai - bi || a.name.split("/").length - b.name.split("/").length;
+    });
+  return pages.length ? pages[0].async("string") : null;
+}
+
+export function NewReportForm({
+  knownClients,
+  aiEnabled,
+}: {
+  knownClients: string[];
+  aiEnabled: boolean;
+}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState("");
@@ -50,6 +75,49 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [published, setPublished] = useState<Published | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiNote, setAiNote] = useState<AiNote | null>(null);
+  // What Claude reads when the upload is a .zip (its main page), kept for "Analizar de nuevo".
+  const [zipHtml, setZipHtml] = useState<string | null>(null);
+  // Fields the person has edited by hand: Claude never overwrites those.
+  const touched = useRef<Set<string>>(new Set());
+  const analyzeSeq = useRef(0);
+
+  const touch = (field: string) => touched.current.add(field);
+
+  async function runAutofill(source: string) {
+    if (!aiEnabled || !source.trim()) return;
+    const seq = ++analyzeSeq.current;
+    setAnalyzing(true);
+    setAiNote(null);
+    try {
+      const res = await fetch("/api/reports/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: source }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (seq !== analyzeSeq.current) return; // a newer file replaced this one
+      if (!res.ok) {
+        setAiNote({ kind: "error", text: data.error || "No se pudo autocompletar. Completalo a mano." });
+        return;
+      }
+      const t = touched.current;
+      if (!t.has("title") && data.title) setTitle(data.title);
+      if (!t.has("description") && data.description) setDescription(data.description);
+      if (!t.has("client")) setClient(data.client ?? "");
+      if (!t.has("period") && data.period) setPeriod(data.period);
+      if (!t.has("internal")) setInternal(!!data.internal);
+      if (!t.has("slug") && data.slug) setSlugOverride(data.slug);
+      setAiNote({ kind: "ok", text: "Completado con Claude. Revisá los datos antes de publicar." });
+    } catch {
+      if (seq === analyzeSeq.current) {
+        setAiNote({ kind: "error", text: "No se pudo autocompletar. Completalo a mano." });
+      }
+    } finally {
+      if (seq === analyzeSeq.current) setAnalyzing(false);
+    }
+  }
 
   const slug = slugOverride ? previewSlug(slugOverride) : previewSlug(title);
 
@@ -60,6 +128,14 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
       setFileName(file.name);
       setFileSize(file.size);
       if (!title) setTitle(file.name.replace(/\.zip$/i, ""));
+      setZipHtml(null);
+      if (aiEnabled && file.size <= MAX_ZIP_FOR_AUTOFILL) {
+        setAnalyzing(true);
+        const entry = await readZipEntryHtml(file).catch(() => null);
+        setZipHtml(entry);
+        if (entry) runAutofill(entry);
+        else setAnalyzing(false);
+      }
       return;
     }
 
@@ -71,6 +147,8 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
     if (!title) {
       setTitle(file.name.replace(/\.html?$/i, ""));
     }
+    setZipHtml(null);
+    runAutofill(text);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -156,6 +234,11 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
     setShowPreview(false);
     setPublished(null);
     setUploadStage("");
+    touched.current = new Set();
+    setZipHtml(null);
+    analyzeSeq.current++;
+    setAnalyzing(false);
+    setAiNote(null);
     setAllowComments(false);
     setInternal(false);
     setVisibility("PUBLIC");
@@ -250,6 +333,25 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
           </label>
         )}
 
+        {aiEnabled && (analyzing || aiNote || html || zipFile) && (
+          <div className={`ai-note${aiNote?.kind === "error" ? " err" : ""}${analyzing ? " busy" : ""}`}>
+            <span aria-hidden="true">✦</span>
+            <span>{analyzing ? "Claude está leyendo el reporte…" : aiNote?.text ?? "Autocompletá los datos con Claude."}</span>
+            {!analyzing && (html || zipHtml) && (
+              <button
+                type="button"
+                className="btn btn-quiet btn-sm"
+                onClick={() => {
+                  touched.current = new Set();
+                  runAutofill(html || zipHtml || "");
+                }}
+              >
+                {aiNote ? "Analizar de nuevo" : "Autocompletar"}
+              </button>
+            )}
+          </div>
+        )}
+
         <details style={{ marginTop: 14, fontSize: "0.85rem" }} hidden={!!zipFile}>
           <summary className="mono-label" style={{ cursor: "pointer" }}>
             O pegá el HTML directamente
@@ -277,7 +379,10 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
               type="text"
               required
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                touch("title");
+                setTitle(e.target.value);
+              }}
               className="input"
               style={{ marginTop: 8 }}
             />
@@ -290,7 +395,10 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
               id="description"
               type="text"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                touch("description");
+                setDescription(e.target.value);
+              }}
               className="input"
               style={{ marginTop: 8 }}
             />
@@ -300,8 +408,14 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
         <ClientPeriodFields
           client={client}
           period={period}
-          onClientChange={setClient}
-          onPeriodChange={setPeriod}
+          onClientChange={(v) => {
+            touch("client");
+            setClient(v);
+          }}
+          onPeriodChange={(v) => {
+            touch("period");
+            setPeriod(v);
+          }}
           knownClients={knownClients}
         />
 
@@ -314,7 +428,10 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
             <input
               id="slug"
               value={slugOverride}
-              onChange={(e) => setSlugOverride(e.target.value)}
+              onChange={(e) => {
+                touch("slug");
+                setSlugOverride(e.target.value);
+              }}
               placeholder={slug || "se genera del título"}
               autoComplete="off"
               spellCheck={false}
@@ -328,7 +445,10 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
           <input
             type="checkbox"
             checked={internal}
-            onChange={(e) => setInternal(e.target.checked)}
+            onChange={(e) => {
+              touch("internal");
+              setInternal(e.target.checked);
+            }}
           />
           Reporte interno de Argus (no es para un cliente)
         </label>
@@ -378,7 +498,7 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
         {error && <div className="err">{error}</div>}
 
         <div className="actions">
-          <button type="submit" disabled={pending} className="btn btn-primary">
+          <button type="submit" disabled={pending || analyzing} className="btn btn-primary">
             {uploadStage === "zip"
               ? "Subiendo ZIP..."
               : uploadStage === "creating"

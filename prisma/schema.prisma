@@ -178,6 +178,9 @@ model Notification {
 // eye on spend.
 model AiRun {
   id           String   @id @default(cuid())
+  // "edit" = applying comments to a report, "autofill" = reading a report that
+  // is being uploaded (so there is no report yet). Each has its own daily limit.
+  kind         String   @default("edit")
   model        String
   inputTokens  Int      @default(0)
   outputTokens Int      @default(0)
@@ -186,8 +189,8 @@ model AiRun {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  reportId String
-  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  reportId String?
+  report   Report? @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }

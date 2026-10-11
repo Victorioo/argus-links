@@ -47,7 +47,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const userId = session.user.id;
   const used = await prisma.aiRun.count({
-    where: { userId, createdAt: { gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+    where: { userId, kind: "edit", createdAt: { gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
   });
   if (used >= AI_DAILY_LIMIT) {
     return NextResponse.json(
@@ -85,6 +85,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     await prisma.aiRun.create({
       data: {
         userId,
+        kind: "edit",
         reportId: report.id,
         model: AI_MODEL,
         inputTokens: result.usage.inputTokens,
