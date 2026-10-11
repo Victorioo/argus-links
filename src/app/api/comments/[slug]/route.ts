@@ -2,13 +2,20 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  CommentImageError,
+  MAX_IMAGES_PER_REPORT_HOUR,
+  deleteCommentImages,
+  saveCommentImage,
+} from "@/lib/comment-image";
 
 const createSchema = z.object({
   selector: z.string().trim().max(500).optional(),
   page: z.string().max(300).optional(),
   parentId: z.string().max(100).optional(),
   authorName: z.string().trim().max(80).optional(),
-  text: z.string().trim().min(1, "El comentario no puede estar vacío").max(2000),
+  // May be empty when a screenshot is attached (checked in POST).
+  text: z.string().trim().max(2000).default(""),
 });
 
 // Signed-in Report Hub users comment under their account name; everyone else
@@ -53,7 +60,7 @@ async function notify(opts: {
       reportId,
       commentId: comment.id,
       actorName: actor.name,
-      snippet: comment.text.slice(0, 140),
+      snippet: comment.text.slice(0, 140) || "📎 Imagen adjunta",
       page: comment.page,
     })),
   });
@@ -98,13 +105,67 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     );
   }
 
-  const body = await req.json().catch(() => null);
+  // Text-only comments arrive as JSON; a comment with a screenshot arrives as
+  // multipart/form-data so the image travels with it (no orphan uploads).
+  let body: unknown;
+  let image: File | null = null;
+  if ((req.headers.get("content-type") || "").includes("multipart/form-data")) {
+    const form = await req.formData().catch(() => null);
+    if (!form) {
+      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+    }
+    const field = (name: string) => {
+      const v = form.get(name);
+      return typeof v === "string" && v !== "" ? v : undefined;
+    };
+    body = {
+      selector: field("selector"),
+      page: field("page"),
+      parentId: field("parentId"),
+      authorName: field("authorName"),
+      text: field("text"),
+    };
+    const file = form.get("image");
+    if (file instanceof File && file.size > 0) image = file;
+  } else {
+    body = await req.json().catch(() => null);
+  }
+
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "Datos inválidos" },
       { status: 400 },
     );
+  }
+  if (!parsed.data.text && !image) {
+    return NextResponse.json({ error: "El comentario no puede estar vacío" }, { status: 400 });
+  }
+
+  // Uploaded only once everything else checked out, right before the comment is
+  // created, so a rejected comment never leaves an image behind. Returns an
+  // error response when the upload is refused.
+  async function attachImage(): Promise<{ url: string | null } | { error: NextResponse }> {
+    if (!image) return { url: null };
+    const recent = await prisma.comment.count({
+      where: { reportId: report!.id, imageUrl: { not: null }, createdAt: { gt: new Date(Date.now() - 60 * 60 * 1000) } },
+    });
+    if (recent >= MAX_IMAGES_PER_REPORT_HOUR) {
+      return {
+        error: NextResponse.json(
+          { error: "Se subieron demasiadas imágenes en este reporte. Probá de nuevo más tarde." },
+          { status: 429 },
+        ),
+      };
+    }
+    try {
+      return { url: await saveCommentImage(report!.id, image) };
+    } catch (err) {
+      if (err instanceof CommentImageError) {
+        return { error: NextResponse.json({ error: err.message }, { status: err.status }) };
+      }
+      throw err;
+    }
   }
 
   const viewer = await getViewer();
@@ -128,17 +189,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       return NextResponse.json({ error: "El comentario original ya no existe" }, { status: 404 });
     }
 
-    const comment = await prisma.comment.create({
-      data: {
-        reportId: report.id,
-        parentId: root.id,
-        selector: root.selector,
-        page: root.page,
-        authorId: actor.id,
-        authorName,
-        text: parsed.data.text,
-      },
-    });
+    const attached = await attachImage();
+    if ("error" in attached) return attached.error;
+    const imageUrl = attached.url;
+
+    const comment = await prisma.comment
+      .create({
+        data: {
+          reportId: report.id,
+          parentId: root.id,
+          selector: root.selector,
+          page: root.page,
+          authorId: actor.id,
+          authorName,
+          text: parsed.data.text,
+          imageUrl,
+        },
+      })
+      .catch(async (err) => {
+        await deleteCommentImages([imageUrl]);
+        throw err;
+      });
     await notify({
       comment,
       actor,
@@ -153,16 +224,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
   }
 
-  const comment = await prisma.comment.create({
-    data: {
-      reportId: report.id,
-      selector: parsed.data.selector,
-      page: parsed.data.page ?? "",
-      authorId: actor.id,
-      authorName,
-      text: parsed.data.text,
-    },
-  });
+  const attached = await attachImage();
+  if ("error" in attached) return attached.error;
+  const imageUrl = attached.url;
+
+  const comment = await prisma.comment
+    .create({
+      data: {
+        reportId: report.id,
+        selector: parsed.data.selector,
+        page: parsed.data.page ?? "",
+        authorId: actor.id,
+        authorName,
+        text: parsed.data.text,
+        imageUrl,
+      },
+    })
+    .catch(async (err) => {
+      await deleteCommentImages([imageUrl]);
+      throw err;
+    });
   await notify({
     comment,
     actor,

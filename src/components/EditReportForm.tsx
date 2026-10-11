@@ -14,6 +14,7 @@ export type CommentItem = {
   text: string;
   createdAt: string;
   resolved: boolean;
+  imageUrl: string | null;
 };
 
 type Props = {
@@ -361,7 +362,19 @@ export function EditReportForm({
                         </span>
                       )}
                     </div>
-                    <div className="desc">{c.text}</div>
+                    {c.text && <div className="desc">{c.text}</div>}
+                    {c.imageUrl && c.imageUrl.startsWith("https://") && (
+                      <a href={c.imageUrl} target="_blank" rel="noopener noreferrer">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={c.imageUrl}
+                          alt="Imagen adjunta"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          style={{ display: "block", maxWidth: 220, maxHeight: 140, borderRadius: 8, marginTop: 8, border: "1px solid var(--line)" }}
+                        />
+                      </a>
+                    )}
                     <div className="meta">
                       <span>{new Date(c.createdAt).toLocaleString("es-AR")}</span>
                     </div>

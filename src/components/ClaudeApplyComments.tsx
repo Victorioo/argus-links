@@ -53,7 +53,7 @@ export function ClaudeApplyComments({
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AiResult | null>(null);
-  const [deleteApplied, setDeleteApplied] = useState(false);
+  const [markResolved, setMarkResolved] = useState(true);
   const [published, setPublished] = useState(false);
   const headRef = useRef<HTMLDivElement>(null);
   const [showTour, setShowTour] = useState(false);
@@ -125,10 +125,17 @@ export function ClaudeApplyComments({
         setError(data.error || "No se pudo publicar los cambios");
         return;
       }
-      if (deleteApplied) {
+      if (markResolved) {
+        // Resolved, not deleted: the thread stays as a record of what was asked.
         const ids = [...new Set(result.applied.flatMap((a) => a.commentIds))];
         await Promise.all(
-          ids.map((cid) => fetch(`/api/comments/${slug}/${cid}`, { method: "DELETE" }).catch(() => {})),
+          ids.map((cid) =>
+            fetch(`/api/comments/${slug}/${cid}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ resolved: true }),
+            }).catch(() => {}),
+          ),
         );
       }
       setPublished(true);
@@ -308,8 +315,8 @@ export function ClaudeApplyComments({
               </details>
 
               <label className="replace" style={{ marginTop: 14 }}>
-                <input type="checkbox" checked={deleteApplied} onChange={(e) => setDeleteApplied(e.target.checked)} />
-                Borrar los comentarios aplicados al publicar
+                <input type="checkbox" checked={markResolved} onChange={(e) => setMarkResolved(e.target.checked)} />
+                Marcar como resueltos los comentarios aplicados al publicar
               </label>
             </>
           )}

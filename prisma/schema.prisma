@@ -127,6 +127,8 @@ model Comment {
   text       String
   // Marked by the team once the feedback has been dealt with.
   resolved   Boolean  @default(false)
+  // Optional screenshot attached by the commenter (a Vercel Blob URL).
+  imageUrl   String?
   createdAt  DateTime @default(now())
 
   reportId String

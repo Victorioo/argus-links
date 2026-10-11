@@ -39,7 +39,7 @@ export default async function ReportDetailPage({
   // page are candidates. Hidden entirely until an API key is configured.
   const aiComments = aiEnabled()
     ? await prisma.comment.findMany({
-        where: { reportId: report.id, parentId: null, page: "" },
+        where: { reportId: report.id, parentId: null, page: "", resolved: false },
         orderBy: { createdAt: "asc" },
         include: { _count: { select: { replies: true } } },
       })
@@ -85,6 +85,7 @@ export default async function ReportDetailPage({
             text: c.text,
             createdAt: c.createdAt.toISOString(),
             resolved: c.resolved,
+            imageUrl: c.imageUrl,
           }))}
         />
       </main>

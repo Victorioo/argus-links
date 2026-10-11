@@ -250,7 +250,7 @@ export function buildMcpServer(user: McpUser): McpServer {
     {
       title: "Ver los comentarios de un reporte",
       description:
-        "Devuelve los comentarios de un reporte agrupados por hilo (con sus respuestas). Cada uno indica la página y el elemento al que apunta (selector CSS).",
+        "Devuelve los comentarios de un reporte agrupados por hilo (con sus respuestas). Cada uno indica la página, el elemento al que apunta (selector CSS), si ya está resuelto y, si el revisor adjuntó una captura, su URL (image_url).",
       inputSchema: {
         slug: z.string().min(1).max(120).describe("El slug del reporte"),
       },
@@ -275,10 +275,17 @@ export function buildMcpServer(user: McpUser): McpServer {
         selector: c.selector,
         author: c.authorName,
         text: c.text,
+        resolved: c.resolved,
+        ...(c.imageUrl ? { image_url: c.imageUrl } : {}),
         created_at: c.createdAt,
         replies: comments
           .filter((r) => r.parentId === c.id)
-          .map((r) => ({ author: r.authorName, text: r.text, created_at: r.createdAt })),
+          .map((r) => ({
+            author: r.authorName,
+            text: r.text,
+            ...(r.imageUrl ? { image_url: r.imageUrl } : {}),
+            created_at: r.createdAt,
+          })),
       }));
 
       return ok({

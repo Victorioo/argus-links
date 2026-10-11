@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { deleteCommentImages } from "@/lib/comment-image";
 
 export async function DELETE(
   _req: Request,
@@ -12,7 +13,14 @@ export async function DELETE(
   }
 
   const { slug, commentId } = await params;
+
+  // Replies are deleted with their thread, so collect every screenshot first.
+  const doomed = await prisma.comment.findMany({
+    where: { report: { slug }, OR: [{ id: commentId }, { parentId: commentId }] },
+    select: { imageUrl: true },
+  });
   await prisma.comment.deleteMany({ where: { id: commentId, report: { slug } } });
+  await deleteCommentImages(doomed.map((c) => c.imageUrl));
 
   return NextResponse.json({ ok: true });
 }
