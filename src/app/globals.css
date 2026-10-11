@@ -533,6 +533,20 @@ h2 {
 .home-head { padding: 36px 0 8px; }
 .home-title { font-size: clamp(1.7rem, 3.4vw, 2.2rem); max-width: none; letter-spacing: -0.015em; }
 .home-head .lead { margin-top: 8px; font-size: 0.98rem; }
+.stat-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+@media (max-width: 640px) { .stat-cards { grid-template-columns: 1fr; } }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 16px 18px 15px;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--violet-700); }
+.stat-value { font-weight: 800; font-size: 2rem; line-height: 1; letter-spacing: -0.02em; }
+.stat-value.attention { color: var(--gold); }
+.stat-label { margin-top: 10px; font-weight: 600; font-size: 0.9rem; }
+.stat-hint { margin-top: 2px; font-size: 0.8rem; color: var(--text-faint); }
 .list { margin-top: 28px; }
 .list-upload { margin-left: auto; }
 .list-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
