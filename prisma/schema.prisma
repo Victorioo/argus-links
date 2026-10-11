@@ -63,6 +63,10 @@ model Report {
   slug          String           @unique
   title         String
   description   String?
+  // Which client account the report is for, and the period it covers
+  // (free text, e.g. "Septiembre 2026"). Both optional.
+  client        String?
+  period        String?
   html          String
   sizeBytes     Int              @default(0)
   views         Int              @default(0)
@@ -119,6 +123,8 @@ model Comment {
   page       String   @default("")
   authorName String
   text       String
+  // Marked by the team once the feedback has been dealt with.
+  resolved   Boolean  @default(false)
   createdAt  DateTime @default(now())
 
   reportId String

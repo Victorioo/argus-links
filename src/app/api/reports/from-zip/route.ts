@@ -57,6 +57,8 @@ const schema = z.object({
   title: z.string().trim().min(1, "El título es obligatorio").max(200),
   slug: z.string().trim().optional(),
   description: z.string().trim().max(500).optional(),
+  client: z.string().trim().max(100).optional(),
+  period: z.string().trim().max(60).optional(),
   allowComments: z.boolean().optional(),
   visibility: z.enum(["PUBLIC", "PASSWORD", "RESTRICTED"]).optional(),
   password: z.string().max(200).optional(),
@@ -83,7 +85,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { blobUrl, title, description, allowComments, viewerIds } = parsed.data;
+  const { blobUrl, title, description, client, period, allowComments, viewerIds } = parsed.data;
   const visibility = parsed.data.visibility ?? "PUBLIC";
   if (visibility === "PASSWORD" && !parsed.data.password?.trim()) {
     return NextResponse.json({ error: "Ingresá una contraseña de acceso" }, { status: 400 });
@@ -239,6 +241,8 @@ export async function POST(req: Request) {
         title,
         slug,
         description: description || null,
+        client: client || null,
+        period: period || null,
         html: htmlText,
         sizeBytes: htmlBytes + totalAssetBytes,
         allowComments: allowComments ?? false,

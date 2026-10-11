@@ -553,6 +553,38 @@ h2 {
 .row .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--text-faint); text-transform: uppercase; }
 .row .btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 @media (max-width: 760px) { .row { grid-template-columns: 1fr; } .row .btns { justify-content: flex-start; } }
+.list-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.list-toolbar > * { height: 44px; }
+.toolbar-search { flex: 1 1 240px; min-width: 0; }
+.client-select {
+  flex: 0 1 220px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 44px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%23A79FC2' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+}
+[data-theme="light"] .client-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%2357506B' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+}
+.toolbar-toggle {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 0 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.toolbar-toggle:hover { border-color: var(--violet-500); color: var(--text); }
+.toolbar-toggle.on { border-color: var(--violet-500); color: var(--violet-300); background: rgba(139, 92, 246, 0.14); }
+.row .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip-pending { border-color: rgba(240, 185, 77, 0.55); color: var(--gold); text-decoration: none; }
+.chip-pending:hover { background: rgba(240, 185, 77, 0.12); }
 .empty { text-align: center; padding: 40px 20px; border: 1px dashed var(--line); border-radius: var(--r-lg); color: var(--text-faint); font-size: 0.92rem; }
 
 /* login */

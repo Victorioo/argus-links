@@ -15,6 +15,8 @@ export default async function DashboardPage() {
     include: {
       createdBy: { select: { name: true } },
       updatedBy: { select: { name: true } },
+      // Top-level comments still waiting for someone to deal with them
+      _count: { select: { comments: { where: { resolved: false, parentId: null } } } },
     },
   });
 
@@ -23,6 +25,9 @@ export default async function DashboardPage() {
     slug: r.slug,
     title: r.title,
     description: r.description,
+    client: r.client,
+    period: r.period,
+    pendingComments: r._count.comments,
     sizeBytes: r.sizeBytes,
     views: r.views,
     updatedAt: r.updatedAt.toISOString(),

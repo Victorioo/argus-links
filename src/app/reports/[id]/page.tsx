@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { EditReportForm } from "@/components/EditReportForm";
 import { ClaudeApplyComments } from "@/components/ClaudeApplyComments";
 import { aiEnabled } from "@/lib/claude-edit";
+import { listKnownClients } from "@/lib/clients";
 
 export default async function ReportDetailPage({
   params,
@@ -24,6 +25,8 @@ export default async function ReportDetailPage({
   if (!report) {
     notFound();
   }
+
+  const knownClients = await listKnownClients();
 
   const comments = report.allowComments
     ? await prisma.comment.findMany({
@@ -67,6 +70,9 @@ export default async function ReportDetailPage({
           initialTitle={report.title}
           initialDescription={report.description ?? ""}
           initialSlug={report.slug}
+          initialClient={report.client ?? ""}
+          initialPeriod={report.period ?? ""}
+          knownClients={knownClients}
           initialAllowComments={report.allowComments}
           initialVisibility={report.visibility}
           initialHasPassword={!!report.passwordHash}
@@ -77,6 +83,7 @@ export default async function ReportDetailPage({
             authorName: c.authorName,
             text: c.text,
             createdAt: c.createdAt.toISOString(),
+            resolved: c.resolved,
           }))}
         />
       </main>

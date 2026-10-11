@@ -10,7 +10,9 @@ export type ReportListItem = {
   slug: string;
   title: string;
   description: string | null;
-  sizeBytes: number;
+  client: string | null;
+  period: string | null;
+  pendingComments: number;
   views: number;
   updatedAt: string;
   createdByName: string;
@@ -18,54 +20,105 @@ export type ReportListItem = {
   visibility: "PUBLIC" | "PASSWORD" | "RESTRICTED";
 };
 
+const NO_CLIENT = "Sin cliente";
+const ALL = "";
+
 function visibilityLabel(v: ReportListItem["visibility"]) {
   if (v === "PASSWORD") return "🔒 Con contraseña";
   if (v === "RESTRICTED") return "👥 Restringido";
   return null;
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString("es-AR", {
+function timeAgo(iso: string) {
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "recién";
+  if (mins < 60) return `hace ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `hace ${days} ${days === 1 ? "día" : "días"}`;
+  return new Date(iso).toLocaleDateString("es-AR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
-}
-
-function formatSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
   const [query, setQuery] = useState("");
+  const [onlyPending, setOnlyPending] = useState(false);
+  const [clientFilter, setClientFilter] = useState(ALL);
+
+  const pendingTotal = useMemo(
+    () => reports.filter((r) => r.pendingComments > 0).length,
+    [reports],
+  );
+
+  const clientOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of reports) {
+      const key = r.client?.trim() || NO_CLIENT;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort(([a], [b]) => {
+      if (a === NO_CLIENT) return 1;
+      if (b === NO_CLIENT) return -1;
+      return a.localeCompare(b, "es");
+    });
+  }, [reports]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return reports;
-    return reports.filter(
-      (r) =>
+    return reports.filter((r) => {
+      if (onlyPending && r.pendingComments === 0) return false;
+      if (clientFilter !== ALL && (r.client?.trim() || NO_CLIENT) !== clientFilter) return false;
+      if (!q) return true;
+      return (
         r.title.toLowerCase().includes(q) ||
         r.description?.toLowerCase().includes(q) ||
-        r.createdByName.toLowerCase().includes(q),
-    );
-  }, [reports, query]);
+        r.client?.toLowerCase().includes(q) ||
+        r.period?.toLowerCase().includes(q) ||
+        r.createdByName.toLowerCase().includes(q)
+      );
+    });
+  }, [reports, query, onlyPending, clientFilter]);
 
   return (
     <section className="list">
       <div className="list-head">
         <h2>Reportes publicados</h2>
         <span className="chip v">{reports.length}</span>
+      </div>
+
+      <div className="list-toolbar">
         <input
           type="search"
-          placeholder="Buscar por título, descripción o autor"
+          placeholder="Buscar reporte, cliente o autor"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="input search"
+          className="input toolbar-search"
         />
+        <select
+          value={clientFilter}
+          onChange={(e) => setClientFilter(e.target.value)}
+          aria-label="Filtrar por cliente"
+          className="input client-select"
+        >
+          <option value={ALL}>Todos los clientes</option>
+          {clientOptions.map(([name, count]) => (
+            <option key={name} value={name}>
+              {name} ({count})
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => setOnlyPending((v) => !v)}
+          aria-pressed={onlyPending}
+          className={`toolbar-toggle${onlyPending ? " on" : ""}`}
+        >
+          Pendientes ({pendingTotal})
+        </button>
       </div>
 
       {filtered.length === 0 ? (
@@ -79,25 +132,30 @@ export function ReportsBrowser({ reports }: { reports: ReportListItem[] }) {
           {filtered.map((r) => (
             <div key={r.id} className="row">
               <div>
-                <a href={`/r/${r.slug}`} target="_blank" rel="noopener noreferrer" className="client">
+                <a
+                  href={`/r/${r.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="client"
+                >
                   {r.title}
                 </a>
-                {visibilityLabel(r.visibility) && (
-                  <span className="chip" style={{ marginLeft: 8 }}>
-                    {visibilityLabel(r.visibility)}
-                  </span>
-                )}
-                {r.description && <div className="desc">{r.description}</div>}
-                <a href={`/r/${r.slug}`} target="_blank" rel="noopener noreferrer" className="u">
-                  /r/{r.slug}
-                </a>
-                <div className="meta">
-                  <span>{r.createdByName}</span>
-                  {r.updatedByName && r.updatedByName !== r.createdByName && (
-                    <span>Actualizado por {r.updatedByName}</span>
+                <div className="tags">
+                  {clientFilter === ALL && r.client && <span className="chip">{r.client}</span>}
+                  {r.period && <span className="chip v">{r.period}</span>}
+                  {r.pendingComments > 0 && (
+                    <Link href={`/reports/${r.id}`} className="chip chip-pending">
+                      {r.pendingComments} sin resolver
+                    </Link>
                   )}
-                  <span>{formatDate(r.updatedAt)}</span>
-                  <span>{formatSize(r.sizeBytes)}</span>
+                  {visibilityLabel(r.visibility) && (
+                    <span className="chip">{visibilityLabel(r.visibility)}</span>
+                  )}
+                </div>
+                {r.description && <div className="desc">{r.description}</div>}
+                <div className="meta">
+                  <span>{r.updatedByName ?? r.createdByName}</span>
+                  <span>{timeAgo(r.updatedAt)}</span>
                   <span>{r.views} vistas</span>
                 </div>
               </div>

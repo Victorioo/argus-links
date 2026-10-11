@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { EyeIcon, TrashIcon } from "@/components/Icons";
+import { ClientPeriodFields } from "@/components/ClientPeriodFields";
 import { VisibilityControl, type Visibility } from "@/components/VisibilityControl";
 
 export type CommentItem = {
@@ -12,6 +13,7 @@ export type CommentItem = {
   authorName: string;
   text: string;
   createdAt: string;
+  resolved: boolean;
 };
 
 type Props = {
@@ -19,6 +21,9 @@ type Props = {
   initialTitle: string;
   initialDescription: string;
   initialSlug: string;
+  initialClient: string;
+  initialPeriod: string;
+  knownClients: string[];
   initialAllowComments: boolean;
   initialComments: CommentItem[];
   initialVisibility: Visibility;
@@ -37,6 +42,9 @@ export function EditReportForm({
   initialTitle,
   initialDescription,
   initialSlug,
+  initialClient,
+  initialPeriod,
+  knownClients,
   initialAllowComments,
   initialComments,
   initialVisibility,
@@ -48,6 +56,8 @@ export function EditReportForm({
 
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
+  const [client, setClient] = useState(initialClient);
+  const [period, setPeriod] = useState(initialPeriod);
   const [slug, setSlug] = useState(initialSlug);
   const [allowComments, setAllowComments] = useState(initialAllowComments);
   const [visibility, setVisibility] = useState<Visibility>(initialVisibility);
@@ -63,6 +73,7 @@ export function EditReportForm({
   const [pending, setPending] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+  const [togglingCommentId, setTogglingCommentId] = useState<string | null>(null);
 
   async function handleDeleteComment(commentId: string) {
     setDeletingCommentId(commentId);
@@ -70,6 +81,19 @@ export function EditReportForm({
     setDeletingCommentId(null);
     if (res.ok) {
       setComments((prev) => prev.filter((c) => c.id !== commentId));
+    }
+  }
+
+  async function handleToggleResolved(commentId: string, resolved: boolean) {
+    setTogglingCommentId(commentId);
+    const res = await fetch(`/api/comments/${slug}/${commentId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resolved }),
+    });
+    setTogglingCommentId(null);
+    if (res.ok) {
+      setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, resolved } : c)));
     }
   }
 
@@ -94,6 +118,8 @@ export function EditReportForm({
     const body: Record<string, string | boolean | string[]> = {
       title,
       description,
+      client,
+      period,
       allowComments,
       visibility,
     };
@@ -174,6 +200,14 @@ export function EditReportForm({
             />
           </div>
         </div>
+
+        <ClientPeriodFields
+          client={client}
+          period={period}
+          onClientChange={setClient}
+          onPeriodChange={setPeriod}
+          knownClients={knownClients}
+        />
 
         <div className="field" style={{ marginTop: 14 }}>
           <label className="mono-label" htmlFor="slug">
@@ -308,6 +342,11 @@ export function EditReportForm({
                   <div>
                     <div className="client" style={{ fontSize: "0.9rem" }}>
                       {c.authorName}
+                      {c.resolved && (
+                        <span className="chip" style={{ marginLeft: 8 }}>
+                          Resuelto
+                        </span>
+                      )}
                     </div>
                     <div className="desc">{c.text}</div>
                     <div className="meta">
@@ -315,6 +354,14 @@ export function EditReportForm({
                     </div>
                   </div>
                   <div className="btns">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleResolved(c.id, !c.resolved)}
+                      disabled={togglingCommentId === c.id}
+                      className="btn btn-quiet btn-sm"
+                    >
+                      {c.resolved ? "Reabrir" : "Resolver"}
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteComment(c.id)}

@@ -4,12 +4,15 @@ import { auth } from "@/auth";
 import { Navbar } from "@/components/Navbar";
 import { NewReportForm } from "@/components/NewReportForm";
 import { ArrowLeftIcon } from "@/components/Icons";
+import { listKnownClients } from "@/lib/clients";
 
 export default async function NewReportPage() {
   const session = await auth();
   if (!session?.user) {
     redirect("/login");
   }
+
+  const knownClients = await listKnownClients();
 
   return (
     <>
@@ -29,7 +32,7 @@ export default async function NewReportPage() {
             volvés a subir uno con el mismo link, el link no cambia.
           </p>
         </section>
-        <NewReportForm />
+        <NewReportForm knownClients={knownClients} />
       </main>
     </>
   );

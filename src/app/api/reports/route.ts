@@ -11,6 +11,8 @@ const createSchema = z.object({
   title: z.string().trim().min(1, "El título es obligatorio").max(200),
   slug: z.string().trim().optional(),
   description: z.string().trim().max(500).optional(),
+  client: z.string().trim().max(100).optional(),
+  period: z.string().trim().max(60).optional(),
   html: z.string().min(1, "El HTML no puede estar vacío"),
   allowComments: z.boolean().optional(),
   visibility: z.enum(["PUBLIC", "PASSWORD", "RESTRICTED"]).optional(),
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { title, description, html, allowComments, viewerIds } = parsed.data;
+  const { title, description, client, period, html, allowComments, viewerIds } = parsed.data;
   const visibility = parsed.data.visibility ?? "PUBLIC";
   const sizeBytes = Buffer.byteLength(html, "utf8");
   if (sizeBytes > MAX_HTML_BYTES) {
@@ -68,6 +70,8 @@ export async function POST(req: Request) {
       title,
       slug,
       description: description || null,
+      client: client || null,
+      period: period || null,
       html,
       sizeBytes,
       allowComments: allowComments ?? false,

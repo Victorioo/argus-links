@@ -5,6 +5,7 @@ import Link from "next/link";
 import { upload } from "@vercel/blob/client";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { ExternalLinkIcon, EyeIcon, PencilIcon, UploadIcon } from "@/components/Icons";
+import { ClientPeriodFields } from "@/components/ClientPeriodFields";
 import { VisibilityControl, type Visibility } from "@/components/VisibilityControl";
 
 function previewSlug(input: string): string {
@@ -26,11 +27,13 @@ function formatSize(bytes: number) {
 
 type Published = { id: string; slug: string };
 
-export function NewReportForm() {
+export function NewReportForm({ knownClients }: { knownClients: string[] }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [client, setClient] = useState("");
+  const [period, setPeriod] = useState("");
   const [slugOverride, setSlugOverride] = useState("");
   const [html, setHtml] = useState("");
   const [zipFile, setZipFile] = useState<File | null>(null);
@@ -88,6 +91,8 @@ export function NewReportForm() {
     const commonBody = {
       title,
       description,
+      client,
+      period,
       slug: slugOverride || undefined,
       allowComments,
       visibility,
@@ -139,6 +144,8 @@ export function NewReportForm() {
   function reset() {
     setTitle("");
     setDescription("");
+    setClient("");
+    setPeriod("");
     setSlugOverride("");
     setHtml("");
     setZipFile(null);
@@ -286,6 +293,14 @@ export function NewReportForm() {
             />
           </div>
         </div>
+
+        <ClientPeriodFields
+          client={client}
+          period={period}
+          onClientChange={setClient}
+          onPeriodChange={setPeriod}
+          knownClients={knownClients}
+        />
 
         <div className="field" style={{ marginTop: 14 }}>
           <label className="mono-label" htmlFor="slug">

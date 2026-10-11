@@ -12,6 +12,8 @@ const updateSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   slug: z.string().trim().optional(),
   description: z.string().trim().max(500).optional(),
+  client: z.string().trim().max(100).optional(),
+  period: z.string().trim().max(60).optional(),
   html: z.string().min(1).optional(),
   allowComments: z.boolean().optional(),
   visibility: z.enum(["PUBLIC", "PASSWORD", "RESTRICTED"]).optional(),
@@ -44,6 +46,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     title?: string;
     slug?: string;
     description?: string | null;
+    client?: string | null;
+    period?: string | null;
     html?: string;
     sizeBytes?: number;
     allowComments?: boolean;
@@ -54,6 +58,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   if (parsed.data.title !== undefined) data.title = parsed.data.title;
   if (parsed.data.description !== undefined) data.description = parsed.data.description || null;
+  if (parsed.data.client !== undefined) data.client = parsed.data.client || null;
+  if (parsed.data.period !== undefined) data.period = parsed.data.period || null;
   if (parsed.data.allowComments !== undefined) data.allowComments = parsed.data.allowComments;
 
   if (parsed.data.visibility !== undefined) {
