@@ -67,6 +67,8 @@ model Report {
   // (free text, e.g. "Septiembre 2026"). Both optional.
   client        String?
   period        String?
+  // Internal Argus report (not made for a client)
+  internal      Boolean          @default(false)
   html          String
   sizeBytes     Int              @default(0)
   views         Int              @default(0)

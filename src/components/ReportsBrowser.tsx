@@ -14,6 +14,7 @@ export type ReportListItem = {
   period: string | null;
   pendingComments: number;
   isMine: boolean;
+  internal: boolean;
   views: number;
   createdAt: string;
   createdByName: string;
@@ -23,7 +24,6 @@ export type ReportListItem = {
 const NO_CLIENT = "Sin cliente";
 const ALL = "";
 const NONE = "__none__";
-const INTERNAL_CLIENT = "argus";
 
 // Clients are free text, so "Argus", "argus " and "ARGUS" must be one client.
 const clientKey = (c: string | null) => c?.trim().toLowerCase() || NONE;
@@ -56,24 +56,27 @@ export function ReportsBrowser({
   const [clientFilter, setClientFilter] = useState(ALL);
   const listRef = useRef<HTMLElement>(null);
   const [mineOnly, setMineOnly] = useState(false);
+  const [internalOnly, setInternalOnly] = useState(false);
 
   // The three cards are presets over these filters. Tapping the one that is
   // already active clears them.
   const cardActive = {
-    mine: mineOnly && !onlyPending && clientFilter === ALL,
+    mine: mineOnly && !onlyPending && !internalOnly,
     comments: mineOnly && onlyPending,
-    internal: clientFilter === INTERNAL_CLIENT && !mineOnly && !onlyPending,
+    internal: internalOnly && !mineOnly && !onlyPending,
   };
   function applyCard(card: keyof typeof cardActive) {
     if (cardActive[card]) {
       setMineOnly(false);
       setOnlyPending(false);
+      setInternalOnly(false);
       setClientFilter(ALL);
       return;
     }
     setMineOnly(card !== "internal");
     setOnlyPending(card === "comments");
-    setClientFilter(card === "internal" ? INTERNAL_CLIENT : ALL);
+    setInternalOnly(card === "internal");
+    setClientFilter(ALL);
     // The filtered list sits below the cards; make the change visible.
     listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -102,6 +105,7 @@ export function ReportsBrowser({
     const q = query.trim().toLowerCase();
     return reports.filter((r) => {
       if (mineOnly && !r.isMine) return false;
+      if (internalOnly && !r.internal) return false;
       if (onlyPending && r.pendingComments === 0) return false;
       if (clientFilter !== ALL && clientKey(r.client) !== clientFilter) return false;
       if (!q) return true;
@@ -113,7 +117,7 @@ export function ReportsBrowser({
         r.createdByName.toLowerCase().includes(q)
       );
     });
-  }, [reports, query, onlyPending, clientFilter, mineOnly]);
+  }, [reports, query, onlyPending, clientFilter, mineOnly, internalOnly]);
 
   const cards = [
     { key: "mine" as const, value: stats.mine, label: "Mis reportes", hint: "publicados por vos" },
@@ -212,6 +216,7 @@ export function ReportsBrowser({
                   {r.title}
                 </a>
                 <div className="tags">
+                  {r.internal && <span className="chip chip-internal">Interno</span>}
                   {clientFilter === ALL && r.client && <span className="chip">{r.client}</span>}
                   {r.period && <span className="chip v">{r.period}</span>}
                   {r.pendingComments > 0 && (

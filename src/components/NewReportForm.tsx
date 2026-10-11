@@ -43,6 +43,7 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
   const [dragOver, setDragOver] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [allowComments, setAllowComments] = useState(false);
+  const [internal, setInternal] = useState(false);
   const [visibility, setVisibility] = useState<Visibility>("PUBLIC");
   const [password, setPassword] = useState("");
   const [viewerIds, setViewerIds] = useState<string[]>([]);
@@ -95,6 +96,7 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
       period,
       slug: slugOverride || undefined,
       allowComments,
+      internal,
       visibility,
       password: visibility === "PASSWORD" ? password : undefined,
       viewerIds: visibility === "RESTRICTED" ? viewerIds : undefined,
@@ -155,6 +157,7 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
     setPublished(null);
     setUploadStage("");
     setAllowComments(false);
+    setInternal(false);
     setVisibility("PUBLIC");
     setPassword("");
     setViewerIds([]);
@@ -320,6 +323,15 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
           </div>
           <div className="hint">Solo minúsculas, números y guiones.</div>
         </div>
+
+        <label className="replace" style={{ marginTop: 14 }}>
+          <input
+            type="checkbox"
+            checked={internal}
+            onChange={(e) => setInternal(e.target.checked)}
+          />
+          Reporte interno de Argus (no es para un cliente)
+        </label>
 
         <label className="replace" style={{ marginTop: 14 }}>
           <input

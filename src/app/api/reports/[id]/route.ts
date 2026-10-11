@@ -17,6 +17,7 @@ const updateSchema = z.object({
   period: z.string().trim().max(60).optional(),
   html: z.string().min(1).optional(),
   allowComments: z.boolean().optional(),
+  internal: z.boolean().optional(),
   visibility: z.enum(["PUBLIC", "PASSWORD", "RESTRICTED"]).optional(),
   password: z.string().max(200).optional(),
   viewerIds: z.array(z.string()).optional(),
@@ -52,6 +53,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     html?: string;
     sizeBytes?: number;
     allowComments?: boolean;
+    internal?: boolean;
     visibility?: "PUBLIC" | "PASSWORD" | "RESTRICTED";
     passwordHash?: string | null;
     updatedById: string;
@@ -62,6 +64,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (parsed.data.client !== undefined) data.client = await canonicalClient(parsed.data.client);
   if (parsed.data.period !== undefined) data.period = parsed.data.period || null;
   if (parsed.data.allowComments !== undefined) data.allowComments = parsed.data.allowComments;
+  if (parsed.data.internal !== undefined) data.internal = parsed.data.internal;
 
   if (parsed.data.visibility !== undefined) {
     const visibility = parsed.data.visibility;

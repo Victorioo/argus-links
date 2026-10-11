@@ -25,6 +25,7 @@ type Props = {
   initialPeriod: string;
   knownClients: string[];
   initialAllowComments: boolean;
+  initialInternal: boolean;
   initialComments: CommentItem[];
   initialVisibility: Visibility;
   initialHasPassword: boolean;
@@ -46,6 +47,7 @@ export function EditReportForm({
   initialPeriod,
   knownClients,
   initialAllowComments,
+  initialInternal,
   initialComments,
   initialVisibility,
   initialHasPassword,
@@ -60,6 +62,7 @@ export function EditReportForm({
   const [period, setPeriod] = useState(initialPeriod);
   const [slug, setSlug] = useState(initialSlug);
   const [allowComments, setAllowComments] = useState(initialAllowComments);
+  const [internal, setInternal] = useState(initialInternal);
   const [visibility, setVisibility] = useState<Visibility>(initialVisibility);
   const [password, setPassword] = useState("");
   const [viewerIds, setViewerIds] = useState<string[]>(initialViewerIds);
@@ -121,6 +124,7 @@ export function EditReportForm({
       client,
       period,
       allowComments,
+      internal,
       visibility,
     };
     if (slug !== initialSlug) body.slug = slug;
@@ -228,6 +232,15 @@ export function EditReportForm({
             <div className="hint warn">Ojo: si cambiás el link, el anterior deja de funcionar.</div>
           )}
         </div>
+
+        <label className="replace" style={{ marginTop: 14 }}>
+          <input
+            type="checkbox"
+            checked={internal}
+            onChange={(e) => setInternal(e.target.checked)}
+          />
+          Reporte interno de Argus (no es para un cliente)
+        </label>
 
         <label className="replace" style={{ marginTop: 14 }}>
           <input

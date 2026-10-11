@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   const stats = {
     mine: mine.length,
     pendingMine: mine.reduce((n, r) => n + r._count.comments, 0),
-    internal: reports.filter((r) => r.client?.trim().toLowerCase() === "argus").length,
+    internal: reports.filter((r) => r.internal).length,
   };
 
   const items: ReportListItem[] = reports.map((r) => ({
@@ -37,6 +37,7 @@ export default async function DashboardPage() {
     period: r.period,
     pendingComments: r._count.comments,
     isMine: r.createdById === session.user.id,
+    internal: r.internal,
     sizeBytes: r.sizeBytes,
     views: r.views,
     createdAt: r.createdAt.toISOString(),

@@ -74,6 +74,7 @@ export default async function ReportDetailPage({
           initialPeriod={report.period ?? ""}
           knownClients={knownClients}
           initialAllowComments={report.allowComments}
+          initialInternal={report.internal}
           initialVisibility={report.visibility}
           initialHasPassword={!!report.passwordHash}
           initialViewerIds={report.allowedViewers.map((v) => v.userId)}
