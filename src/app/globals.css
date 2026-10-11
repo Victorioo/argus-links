@@ -483,7 +483,29 @@ h2 {
 .hint.warn { color: var(--gold); }
 .hint.bad { color: var(--pink); }
 .replace { display: inline-flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--text-dim); cursor: pointer; }
-.replace input { accent-color: var(--violet-500); width: 16px; height: 16px; }
+.replace input[type="checkbox"] {
+  --check: var(--violet-500);
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border-radius: 6px;
+  border: 1.5px solid color-mix(in srgb, var(--text-dim) 55%, transparent);
+  background: var(--surface-2) center / 12px 12px no-repeat;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.replace input[type="checkbox"]:hover { border-color: var(--check); }
+.replace input[type="checkbox"]:checked {
+  background-color: var(--check);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 6.4l2.4 2.4 4.6-5.2'/%3E%3C/svg%3E");
+  border-color: var(--check);
+  box-shadow: 0 4px 12px -5px var(--check);
+}
+.replace input[type="checkbox"]:focus-visible { outline: 2px solid var(--check); outline-offset: 2px; }
+.replace input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .actions { display: flex; align-items: center; gap: 16px; margin-top: 22px; flex-wrap: wrap; }
 .err {
@@ -876,7 +898,7 @@ footer {
 }
 .claude-card .replace { color: var(--cl-dim); font-size: 0.92rem; line-height: 1.45; }
 .claude-card .replace b { color: var(--cl-text); }
-.claude-card .replace input { accent-color: var(--cl-clay); width: 18px; height: 18px; }
+.claude-card .replace input[type="checkbox"] { --check: var(--cl-clay); width: 18px; height: 18px; }
 .claude-card .input {
   background: var(--cl-bg-2);
   border: 1px solid var(--cl-line);

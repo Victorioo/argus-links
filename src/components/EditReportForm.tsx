@@ -233,7 +233,7 @@ export function EditReportForm({
           )}
         </div>
 
-        <label className="replace" style={{ marginTop: 14 }}>
+        <label className="replace" style={{ marginTop: 14, display: "flex" }}>
           <input
             type="checkbox"
             checked={internal}
@@ -242,7 +242,7 @@ export function EditReportForm({
           Reporte interno de Argus (no es para un cliente)
         </label>
 
-        <label className="replace" style={{ marginTop: 14 }}>
+        <label className="replace" style={{ marginTop: 14, display: "flex" }}>
           <input
             type="checkbox"
             checked={allowComments}

@@ -324,7 +324,7 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
           <div className="hint">Solo minúsculas, números y guiones.</div>
         </div>
 
-        <label className="replace" style={{ marginTop: 14 }}>
+        <label className="replace" style={{ marginTop: 14, display: "flex" }}>
           <input
             type="checkbox"
             checked={internal}
@@ -333,7 +333,7 @@ export function NewReportForm({ knownClients }: { knownClients: string[] }) {
           Reporte interno de Argus (no es para un cliente)
         </label>
 
-        <label className="replace" style={{ marginTop: 14 }}>
+        <label className="replace" style={{ marginTop: 14, display: "flex" }}>
           <input
             type="checkbox"
             checked={allowComments}
