@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No se pudo generar un link válido para ese título" }, { status: 400 });
   }
 
-  const existing = await prisma.report.findUnique({ where: { slug } });
+  const existing = await prisma.report.findUnique({ where: { slug }, select: { id: true } });
   if (existing) {
     // Auto-disambiguate rather than fail outright
     slug = `${slug}-${Math.random().toString(36).slice(2, 7)}`;

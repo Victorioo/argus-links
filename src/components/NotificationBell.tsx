@@ -48,13 +48,23 @@ export function NotificationBell() {
 
   useEffect(() => {
     const first = setTimeout(load, 0);
-    const timer = setInterval(load, POLL_MS);
-    const onFocus = () => load();
-    window.addEventListener("focus", onFocus);
+    // Do not poll from a tab nobody is looking at: every poll is a database
+    // query, and the database is billed for the hours it stays awake, so a tab
+    // left open overnight would keep it running 24 hours a day.
+    const timer = setInterval(() => {
+      if (!document.hidden) load();
+    }, POLL_MS);
+    // Catch up as soon as the tab is looked at again.
+    const onVisible = () => {
+      if (!document.hidden) load();
+    };
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       clearTimeout(first);
       clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [load]);
 

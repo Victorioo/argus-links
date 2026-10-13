@@ -9,9 +9,18 @@ export async function GET(
   const { slug, path } = await params;
   const relPath = path.join("/");
 
+  // Only what the access check needs: this runs once per file of the report
+  // (every image, stylesheet, script...), so it must not load the HTML.
   const report = await prisma.report.findUnique({
     where: { slug },
-    include: { allowedViewers: { select: { userId: true } } },
+    select: {
+      id: true,
+      createdById: true,
+      visibility: true,
+      passwordHash: true,
+      allowComments: true,
+      allowedViewers: { select: { userId: true } },
+    },
   });
 
   if (!report) {

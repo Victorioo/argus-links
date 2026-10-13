@@ -62,7 +62,10 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const report = await prisma.report.findUnique({ where: { slug } });
+  const report = await prisma.report.findUnique({
+    where: { slug },
+    select: { id: true, visibility: true, passwordHash: true },
+  });
 
   if (!report) {
     return new NextResponse("Reporte no encontrado", { status: 404 });

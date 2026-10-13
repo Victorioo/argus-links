@@ -183,7 +183,7 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  const existing = await prisma.report.findUnique({ where: { slug } });
+  const existing = await prisma.report.findUnique({ where: { slug }, select: { id: true } });
   if (existing) {
     slug = `${slug}-${Math.random().toString(36).slice(2, 7)}`;
   }

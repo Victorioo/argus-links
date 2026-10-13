@@ -30,7 +30,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const { id } = await params;
-  const existing = await prisma.report.findUnique({ where: { id } });
+  const existing = await prisma.report.findUnique({
+    where: { id },
+    select: { slug: true, visibility: true, passwordHash: true },
+  });
   if (!existing) {
     return NextResponse.json({ error: "Reporte no encontrado" }, { status: 404 });
   }
@@ -137,7 +140,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const existing = await prisma.report.findUnique({
     where: { id },
-    include: { assets: { select: { blobUrl: true } } },
+    select: { assets: { select: { blobUrl: true } } },
   });
   if (!existing) {
     return NextResponse.json({ error: "Reporte no encontrado" }, { status: 404 });

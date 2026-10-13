@@ -12,9 +12,23 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  // Always `select` here: a plain findMany/include returns every column, and
+  // `html` (the report itself, up to 4MB each) would be downloaded from the
+  // database for all reports on every visit to the home page (~17MB vs ~15KB).
   const reports = await prisma.report.findMany({
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      client: true,
+      period: true,
+      internal: true,
+      views: true,
+      createdAt: true,
+      createdById: true,
+      visibility: true,
       createdBy: { select: { name: true } },
       // Top-level comments still waiting for someone to deal with them
       _count: { select: { comments: { where: { resolved: false, parentId: null } } } },
@@ -42,7 +56,6 @@ export default async function DashboardPage() {
     pendingComments: r._count.comments,
     isMine: r.createdById === session.user.id,
     internal: r.internal,
-    sizeBytes: r.sizeBytes,
     views: r.views,
     createdAt: r.createdAt.toISOString(),
     createdByName: r.createdBy?.name ?? "Cuenta eliminada",

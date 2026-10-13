@@ -20,7 +20,19 @@ export default async function ReportDetailPage({
   const { id } = await params;
   const report = await prisma.report.findUnique({
     where: { id },
-    include: { allowedViewers: { select: { userId: true } } },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      client: true,
+      period: true,
+      internal: true,
+      allowComments: true,
+      visibility: true,
+      passwordHash: true,
+      allowedViewers: { select: { userId: true } },
+    },
   });
   if (!report) {
     notFound();
