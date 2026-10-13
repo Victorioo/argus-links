@@ -41,7 +41,7 @@ export default async function ReportDetailPage({
     ? await prisma.comment.findMany({
         where: { reportId: report.id, parentId: null, page: "", resolved: false },
         orderBy: { createdAt: "asc" },
-        include: { _count: { select: { replies: true } } },
+        include: { replies: { select: { imageUrl: true } } },
       })
     : [];
 
@@ -61,7 +61,8 @@ export default async function ReportDetailPage({
               id: c.id,
               authorName: c.authorName,
               text: c.text,
-              replyCount: c._count.replies,
+              replyCount: c.replies.length,
+              imageCount: (c.imageUrl ? 1 : 0) + c.replies.filter((r) => r.imageUrl).length,
             }))}
           />
         )}

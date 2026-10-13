@@ -11,6 +11,8 @@ export type AiComment = {
   authorName: string;
   text: string;
   replyCount: number;
+  // Screenshots attached to the comment or its replies: Claude can see them.
+  imageCount: number;
 };
 
 type Applied = { commentIds: string[]; find: string; replace: string };
@@ -22,6 +24,8 @@ type AiResult = {
   failed: { commentIds: string[]; reason: string }[];
   skipped: { commentId: string; reason: string }[];
   newExternalHosts: string[];
+  imagesSeen: number;
+  imagesUnavailable: number;
   remainingToday: number;
 };
 
@@ -148,7 +152,7 @@ export function ClaudeApplyComments({
 
   const commentText = (id: string) => {
     const c = comments.find((x) => x.id === id);
-    return c ? `${c.authorName}: ${clip(c.text, 80)}` : id;
+    return c ? `${c.authorName}: ${c.text ? clip(c.text, 80) : "📎 imagen adjunta"}` : id;
   };
 
   return (
@@ -197,7 +201,13 @@ export function ClaudeApplyComments({
                   style={{ marginTop: 4 }}
                 />
                 <span>
-                  <b>{c.authorName}</b>: {clip(c.text, 220)}
+                  <b>{c.authorName}</b>: {c.text ? clip(c.text, 220) : <i>(solo imagen)</i>}
+                  {c.imageCount > 0 && (
+                    <span style={{ opacity: 0.85 }}>
+                      {" "}
+                      · 📎 {c.imageCount} {c.imageCount === 1 ? "imagen" : "imágenes"}
+                    </span>
+                  )}
                   {c.replyCount > 0 && (
                     <span style={{ opacity: 0.7 }}>
                       {" "}
@@ -244,6 +254,24 @@ export function ClaudeApplyComments({
           {result.summary && (
             <div className="hint ok" style={{ whiteSpace: "pre-wrap", marginBottom: 14 }}>
               {result.summary}
+            </div>
+          )}
+
+          {(result.imagesSeen > 0 || result.imagesUnavailable > 0) && (
+            <div className={result.imagesUnavailable > 0 ? "hint warn" : "hint"} style={{ marginBottom: 14 }}>
+              {result.imagesSeen > 0 && (
+                <>
+                  Claude vio {result.imagesSeen} {result.imagesSeen === 1 ? "imagen adjunta" : "imágenes adjuntas"} a los
+                  comentarios.{" "}
+                </>
+              )}
+              {result.imagesUnavailable > 0 && (
+                <>
+                  No pudo ver {result.imagesUnavailable}{" "}
+                  {result.imagesUnavailable === 1 ? "imagen (ya no existe o no se pudo cargar)" : "imágenes (ya no existen, no se pudieron cargar o se pasó el máximo de 8)"}
+                  .
+                </>
+              )}
             </div>
           )}
 

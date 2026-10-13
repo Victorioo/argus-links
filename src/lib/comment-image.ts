@@ -1,4 +1,5 @@
 import { del, put } from "@vercel/blob";
+import { prisma } from "@/lib/prisma";
 
 // Screenshots attached to comments. Anyone with a report link can comment, so
 // uploads are checked by what the file really is (its first bytes), never by the
@@ -76,5 +77,15 @@ export function isCommentImageUrl(url: string | null | undefined): url is string
 export async function deleteCommentImages(urls: (string | null | undefined)[]): Promise<void> {
   const own = urls.filter(isCommentImageUrl);
   if (!own.length) return;
-  await del(own).catch((err) => console.error("could not delete comment images", err));
+
+  // "Replace this image with the attached one" puts the comment's image into the
+  // report itself. Deleting that comment (e.g. once it was applied) must not
+  // break the report, so images a report still references are kept.
+  const doomed: string[] = [];
+  for (const url of own) {
+    const inUse = await prisma.report.findFirst({ where: { html: { contains: url } }, select: { id: true } });
+    if (!inUse) doomed.push(url);
+  }
+  if (!doomed.length) return;
+  await del(doomed).catch((err) => console.error("could not delete comment images", err));
 }

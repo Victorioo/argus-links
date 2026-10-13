@@ -72,7 +72,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     selector: c.selector,
     authorName: c.authorName,
     text: c.text,
-    replies: c.replies.map((r) => ({ authorName: r.authorName, text: r.text })),
+    imageUrl: c.imageUrl,
+    replies: c.replies.map((r) => ({ authorName: r.authorName, text: r.text, imageUrl: r.imageUrl })),
   }));
 
   try {
@@ -101,6 +102,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       failed: result.failed,
       skipped: result.skipped,
       newExternalHosts: result.newExternalHosts,
+      imagesSeen: result.imagesSeen,
+      imagesUnavailable: result.imagesUnavailable,
       remainingToday: Math.max(0, AI_DAILY_LIMIT - used - 1),
     });
   } catch (err) {
