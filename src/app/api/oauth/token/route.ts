@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import {
   ACCESS_TTL_MS,
   REFRESH_TTL_MS,
-  SCOPE,
+  parseScopes,
+  scopeString,
   corsPreflight,
   oauthError,
   randomToken,
@@ -24,7 +25,7 @@ async function readParams(req: Request): Promise<Record<string, string>> {
   return Object.fromEntries(new URLSearchParams(text));
 }
 
-function tokenResponse(access: string, refresh: string): Response {
+function tokenResponse(access: string, refresh: string, scope: string): Response {
   return withCors(
     NextResponse.json(
       {
@@ -32,7 +33,7 @@ function tokenResponse(access: string, refresh: string): Response {
         token_type: "Bearer",
         expires_in: Math.floor(ACCESS_TTL_MS / 1000),
         refresh_token: refresh,
-        scope: SCOPE,
+        scope: scopeString(parseScopes(scope)),
       },
       { headers: { "Cache-Control": "no-store", Pragma: "no-cache" } },
     ),
@@ -76,11 +77,12 @@ export async function POST(req: Request) {
         refreshHash: sha256Hex(refresh),
         accessExpiresAt: new Date(Date.now() + ACCESS_TTL_MS),
         refreshExpiresAt: new Date(Date.now() + REFRESH_TTL_MS),
+        scope: record.scope,
         clientId: record.clientId,
         userId: record.userId,
       },
     });
-    return tokenResponse(access, refresh);
+    return tokenResponse(access, refresh, record.scope);
   }
 
   if (p.grant_type === "refresh_token") {
@@ -117,7 +119,8 @@ export async function POST(req: Request) {
     if (rotated.count !== 1) {
       return oauthError("invalid_grant", "El refresh token es inválido o venció");
     }
-    return tokenResponse(access, refresh);
+    // The granted permissions stay exactly as approved; a refresh never widens them.
+    return tokenResponse(access, refresh, record.scope);
   }
 
   return oauthError("unsupported_grant_type", "Solo authorization_code y refresh_token");

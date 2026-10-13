@@ -23,7 +23,7 @@ export default async function ConnectPage() {
   // One row per connected app, not per token.
   const byClient = new Map<
     string,
-    { clientId: string; name: string; host: string; since: Date; lastUsed: Date | null }
+    { clientId: string; name: string; host: string; since: Date; lastUsed: Date | null; write: boolean }
   >();
   for (const t of tokens) {
     const existing = byClient.get(t.client.clientId);
@@ -41,9 +41,11 @@ export default async function ConnectPage() {
         host,
         since: t.createdAt,
         lastUsed: t.lastUsedAt,
+        write: t.scope.split(" ").includes("reports:write"),
       });
     } else {
       if (t.createdAt < existing.since) existing.since = t.createdAt;
+      if (t.scope.split(" ").includes("reports:write")) existing.write = true;
       if (t.lastUsedAt && (!existing.lastUsed || t.lastUsedAt > existing.lastUsed)) existing.lastUsed = t.lastUsedAt;
     }
   }
@@ -93,7 +95,11 @@ export default async function ConnectPage() {
           <ul className="claude-steps" style={{ listStyle: "disc" }}>
             <li>Ver los reportes a los que tenés acceso, buscar en su contenido y leerlos.</li>
             <li>Ver los comentarios de cada reporte.</li>
-            <li><b>Solo lectura:</b> no puede crear, editar ni borrar nada.</li>
+            <li>
+              <b>Si lo permitís al conectar</b>, también crear y actualizar reportes a tu nombre. Los que cree quedan
+              visibles solo para vos hasta que decidas compartirlos, y no se aceptan scripts ni contenido ejecutable.
+            </li>
+            <li>Nunca borrar reportes ni comentarios.</li>
           </ul>
 
           <div className="mono-label" style={{ margin: "26px 0 10px" }}>Tus conexiones</div>
@@ -106,6 +112,7 @@ export default async function ConnectPage() {
                   <div>
                     <b>{c.name}</b>
                     {c.host && <span style={{ opacity: 0.7 }}> · {c.host}</span>}
+                    <span className="claude-perm">{c.write ? "Lectura y escritura" : "Solo lectura"}</span>
                     <div className="hint" style={{ margin: "4px 0 0" }}>
                       Conectado el {formatDate(c.since)} · último uso: {formatDate(c.lastUsed)}
                     </div>

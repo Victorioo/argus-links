@@ -1074,3 +1074,14 @@ ol.claude-steps { list-style: decimal; }
 @media (prefers-reduced-motion: reduce) {
   .claude-fab, .claude-fab-label { transition: none; }
 }
+
+.claude-perm {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--cl-line);
+  font-size: 0.72rem;
+  color: var(--cl-dim);
+  vertical-align: middle;
+}

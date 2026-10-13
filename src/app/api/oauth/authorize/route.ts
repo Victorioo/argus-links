@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { CODE_TTL_MS, issuer, randomToken, sha256Hex } from "@/lib/oauth";
+import { CODE_TTL_MS, SCOPE_READ, SCOPE_WRITE, issuer, randomToken, scopeString, sha256Hex } from "@/lib/oauth";
 import { checkAuthorizeRequest } from "@/lib/oauth-authorize";
 
 function backTo(redirectUri: string, params: Record<string, string>): NextResponse {
@@ -43,12 +43,16 @@ export async function POST(req: Request) {
     });
   }
 
+  // Reading is always granted; writing only if the person ticked it on the consent screen.
+  const granted = scopeString(form.get("allow_write") === "on" ? [SCOPE_READ, SCOPE_WRITE] : [SCOPE_READ]);
+
   const code = randomToken("rhcode");
   await prisma.oAuthCode.create({
     data: {
       codeHash: sha256Hex(code),
       redirectUri: params.redirectUri,
       codeChallenge: params.codeChallenge,
+      scope: granted,
       expiresAt: new Date(Date.now() + CODE_TTL_MS),
       client: { connect: { clientId: params.clientId } },
       user: { connect: { id: session.user.id } },

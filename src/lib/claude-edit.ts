@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { loadCommentImages, type LoadedImage } from "@/lib/claude-images";
+import { externalHosts, introducesActiveContent } from "@/lib/active-content";
 
 export const AI_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 export const AI_DAILY_LIMIT = Number(process.env.AI_DAILY_LIMIT) || 20;
@@ -67,37 +68,6 @@ export function unmaskDataUris(text: string, originals: string[]): string {
   return text.replace(/⟦data-uri-(\d+)⟧/g, (m, i) => originals[Number(i)] ?? m);
 }
 
-// ---------------------------------------------------------------- external hosts
-// Comments come from anyone, so a result that suddenly talks to new domains is
-// flagged for the human reviewing the preview.
-export function externalHosts(html: string): Set<string> {
-  const hosts = new Set<string>();
-  const re = /(?:src|href|action|poster|data-src)\s*=\s*["']?(?:https?:)?\/\/([^/"'\s?#>]+)|url\(\s*["']?(?:https?:)?\/\/([^/"'\s)?#]+)|@import\s+["'](?:https?:)?\/\/([^/"'\s?#]+)/gi;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(html))) hosts.add((m[1] || m[2] || m[3]).toLowerCase());
-  return hosts;
-}
-
-// ---------------------------------------------------------------- active content
-// Reports are served from the same origin as the app, so script injected into
-// one could act on a visitor's session. Anyone can leave a comment, so Claude
-// is never allowed to ADD executable content, whatever a comment says. (The
-// owner can still upload such HTML themselves.)
-const ACTIVE_PATTERNS: RegExp[] = [
-  /<script\b/gi,
-  /<iframe\b/gi,
-  /<object\b/gi,
-  /<embed\b/gi,
-  /<form\b/gi,
-  /<meta[^>]+http-equiv\s*=\s*["']?refresh/gi,
-  /[\s"'/]on[a-z]+\s*=/gi,
-  /javascript\s*:/gi,
-];
-
-export function introducesActiveContent(find: string, replace: string): boolean {
-  const count = (text: string, re: RegExp) => (text.match(re) || []).length;
-  return ACTIVE_PATTERNS.some((re) => count(replace, re) > count(find, re));
-}
 
 // ---------------------------------------------------------------- prompt
 const SYSTEM_PROMPT = `You edit a single HTML report according to reviewers' comments.

@@ -7,7 +7,21 @@ import { getAppUrl } from "@/lib/email";
 // authorization code + PKCE (S256 only), public clients, dynamic registration,
 // rotating refresh tokens. Only hashes of secrets are stored.
 
-export const SCOPE = "reports:read";
+// Permissions a person can grant to a connected app. Reading is always part of
+// a connection; writing (create/update reports in their name) is a separate,
+// explicit opt-in on the consent screen.
+export const SCOPE_READ = "reports:read";
+export const SCOPE_WRITE = "reports:write";
+export const ALL_SCOPES = [SCOPE_READ, SCOPE_WRITE];
+
+// Keeps only known scopes, and always includes read.
+export function parseScopes(raw: string | null | undefined): string[] {
+  const asked = new Set((raw ?? "").split(/\s+/).filter((s) => ALL_SCOPES.includes(s)));
+  asked.add(SCOPE_READ);
+  return ALL_SCOPES.filter((s) => asked.has(s));
+}
+
+export const scopeString = (scopes: string[]) => scopes.join(" ");
 export const CODE_TTL_MS = 5 * 60 * 1000;
 export const ACCESS_TTL_MS = 60 * 60 * 1000; // 1 hour
 export const REFRESH_TTL_MS = 60 * 24 * 60 * 60 * 1000; // 60 days
@@ -92,7 +106,7 @@ export function oauthError(error: string, description: string, status = 400): Re
 }
 
 // ---------------------------------------------------------------- bearer auth
-export type McpUser = { id: string; name: string; email: string };
+export type McpUser = { id: string; name: string; email: string; scopes: string[] };
 
 export async function authenticateBearer(req: Request): Promise<McpUser | null> {
   const header = req.headers.get("authorization") || "";
@@ -108,7 +122,7 @@ export async function authenticateBearer(req: Request): Promise<McpUser | null> 
   if (!token.lastUsedAt || Date.now() - token.lastUsedAt.getTime() > LAST_USED_THROTTLE_MS) {
     prisma.oAuthToken.update({ where: { id: token.id }, data: { lastUsedAt: new Date() } }).catch(() => {});
   }
-  return { id: token.user.id, name: token.user.name, email: token.user.email };
+  return { id: token.user.id, name: token.user.name, email: token.user.email, scopes: parseScopes(token.scope) };
 }
 
 export function unauthorized(): Response {
@@ -118,7 +132,7 @@ export function unauthorized(): Response {
       {
         status: 401,
         headers: {
-          "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadataUrl()}", scope="${SCOPE}"`,
+          "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadataUrl()}", scope="${scopeString(ALL_SCOPES)}"`,
           "Cache-Control": "no-store",
         },
       },

@@ -26,6 +26,7 @@ model User {
   aiRuns             AiRun[]
   oauthCodes         OAuthCode[]
   oauthTokens        OAuthToken[]
+  mcpWrites          McpWrite[]
 }
 
 model EmailVerificationToken {
@@ -91,6 +92,7 @@ model Report {
   assets         ReportAsset[]
   notifications  Notification[]
   aiRuns         AiRun[]
+  mcpWrites      McpWrite[]
 }
 
 model ReportAsset {
@@ -217,6 +219,8 @@ model OAuthCode {
   codeHash      String   @unique
   redirectUri   String
   codeChallenge String // PKCE, S256
+  // Space-separated permissions the person approved: reports:read, reports:write
+  scope         String   @default("reports:read")
   expiresAt     DateTime
   createdAt     DateTime @default(now())
 
@@ -233,6 +237,8 @@ model OAuthToken {
   refreshHash      String    @unique
   accessExpiresAt  DateTime
   refreshExpiresAt DateTime
+  // Permissions granted by the person (kept across refreshes)
+  scope            String    @default("reports:read")
   createdAt        DateTime  @default(now())
   lastUsedAt       DateTime?
 
@@ -243,4 +249,22 @@ model OAuthToken {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// One row per create/update made through the MCP connector: an audit trail of
+// what Claude published on someone's behalf, and the basis for the hourly limit.
+model McpWrite {
+  id        String   @id @default(cuid())
+  tool      String // create_report | update_report
+  slug      String
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // The report may be deleted later; keep the log row but drop the link.
+  reportId String?
+  report   Report? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
 }

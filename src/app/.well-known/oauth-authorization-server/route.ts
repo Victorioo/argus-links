@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { SCOPE, corsPreflight, issuer, withCors } from "@/lib/oauth";
+import { ALL_SCOPES, corsPreflight, issuer, withCors } from "@/lib/oauth";
 
 // RFC 8414 authorization server metadata.
 export async function GET() {
@@ -14,7 +14,7 @@ export async function GET() {
       grant_types_supported: ["authorization_code", "refresh_token"],
       code_challenge_methods_supported: ["S256"],
       token_endpoint_auth_methods_supported: ["none"],
-      scopes_supported: [SCOPE],
+      scopes_supported: ALL_SCOPES,
       authorization_response_iss_parameter_supported: true,
     }),
   );
