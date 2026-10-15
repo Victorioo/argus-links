@@ -14,7 +14,7 @@ const NOTICE =
 
 const READ_NOTE = "Estas herramientas son de solo lectura.";
 const WRITE_NOTE =
-  "Además podés crear y actualizar reportes a nombre del usuario: antes de create_report llamá a get_report_guidelines, usá solo datos reales y dejá que el usuario decida si se comparte el link.";
+  "Además podés crear y actualizar reportes a nombre del usuario: antes de create_report llamá a get_report_guidelines, usá solo datos reales. Los reportes que crees quedan públicos; pasale el link al usuario y dejá que él decida si los edita o los hace privados.";
 
 const instructionsFor = (canWrite: boolean) => `Report Hub es el repositorio interno de reportes HTML del equipo Argus PPC. Cada reporte tiene un link estable (/r/<slug>), un autor, un historial de actualización y, si están habilitados, comentarios por elemento. ${canWrite ? WRITE_NOTE : READ_NOTE} Usá list_reports o search_reports para encontrar reportes, get_report para leer uno y get_report_comments para ver los comentarios. ${NOTICE}`;
 

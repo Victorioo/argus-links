@@ -54,10 +54,10 @@ async function overHourlyLimit(userId: string): Promise<boolean> {
 
 const visibilityNote = (v: string) =>
   v === "RESTRICTED"
-    ? "El reporte quedó visible solo para vos. Antes de compartir el link con otras personas, preguntale al usuario si quiere publicarlo y, si dice que sí, usá update_report con visibility: PUBLIC."
+    ? "El reporte es privado: solo lo ve su creador. Si el usuario quiere que cualquiera con el link pueda verlo, usá update_report con visibility: PUBLIC."
     : v === "PASSWORD"
       ? "El reporte tiene contraseña: solo entra quien la conozca."
-      : "El reporte es público: cualquiera con el link puede verlo.";
+      : "El reporte quedó publicado: cualquiera con el link puede verlo. Pasale el link al usuario y avisale que si quiere editarlo o hacerlo privado, se lo cambiás (update_report).";
 
 export function registerWriteTools(server: McpServer, user: McpUser): void {
   // ------------------------------------------------------------ guidelines
@@ -76,7 +76,7 @@ export function registerWriteTools(server: McpServer, user: McpUser): void {
           "1. Traé los datos con las herramientas del Dashboard. Usá SOLO números que devuelvan esas herramientas.",
           "2. Si ya existe un reporte de ese cliente y período (list_reports / search_reports), actualizalo con update_report en vez de crear otro.",
           "3. Armá el HTML a partir de la plantilla de template_html y creá el reporte con create_report.",
-          "4. Pasale al usuario el link. Preguntale si quiere compartirlo públicamente; si sí, update_report con visibility: PUBLIC.",
+          "4. Pasale al usuario el link: el reporte queda PÚBLICO. Después él decide si quiere editarlo (update_report) o hacerlo privado (visibility: RESTRICTED).",
         ],
         data_rules: [
           "Nunca inventes ni estimes cifras. Si falta un dato, escribí «sin datos» en ese lugar.",
@@ -99,7 +99,7 @@ export function registerWriteTools(server: McpServer, user: McpUser): void {
           "Idioma español (es-AR), responsive y que se imprima bien.",
         ],
         visibility_default:
-          "Los reportes nuevos quedan RESTRICTED (solo el creador). Pasar a PUBLIC solo si el usuario lo pide.",
+          "Los reportes nuevos quedan PUBLIC (cualquiera con el link). Pasalos a RESTRICTED solo si el usuario pide que sean privados.",
         template_html: REPORT_TEMPLATE_HTML,
       });
     },
@@ -111,7 +111,7 @@ export function registerWriteTools(server: McpServer, user: McpUser): void {
     {
       title: "Crear un reporte",
       description:
-        "Publica un reporte HTML nuevo en Report Hub a nombre del usuario y devuelve su link. Por defecto queda visible solo para él. Si ya existe un reporte con ese link, falla: usá update_report.",
+        "Publica un reporte HTML nuevo en Report Hub a nombre del usuario y devuelve su link. Por defecto queda público (cualquiera con el link); después la persona decide si lo edita. Si ya existe un reporte con ese link, falla: usá update_report.",
       inputSchema: {
         title: z.string().min(1).max(200).describe("Título del reporte"),
         html: z.string().min(1).describe("Documento HTML completo y autocontenido, sin scripts"),
@@ -125,7 +125,7 @@ export function registerWriteTools(server: McpServer, user: McpUser): void {
         slug: z.string().max(80).optional().describe("Link a mano; si lo omitís se arma con la regla del equipo"),
         description: z.string().max(500).optional().describe("Descripción corta"),
         allow_comments: z.boolean().optional().describe("Permitir comentarios en el reporte (por defecto no)"),
-        visibility: z.enum(["RESTRICTED", "PUBLIC"]).optional().describe("RESTRICTED = solo el creador (por defecto); PUBLIC = cualquiera con el link"),
+        visibility: z.enum(["RESTRICTED", "PUBLIC"]).optional().describe("PUBLIC = cualquiera con el link (por defecto); RESTRICTED = solo el creador"),
       },
       annotations: { title: "Crear un reporte", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
@@ -151,7 +151,7 @@ export function registerWriteTools(server: McpServer, user: McpUser): void {
         );
       }
 
-      const visibility = a.visibility ?? "RESTRICTED";
+      const visibility = a.visibility ?? "PUBLIC";
       const period = a.period?.trim() || (a.month ? defaultPeriodLabel(a.month, a.year ?? now.getFullYear()) : null);
       const sizeBytes = Buffer.byteLength(a.html, "utf8");
 
@@ -213,7 +213,7 @@ export function registerWriteTools(server: McpServer, user: McpUser): void {
         period: z.string().max(60).optional(),
         internal: z.boolean().optional(),
         allow_comments: z.boolean().optional(),
-        visibility: z.enum(["RESTRICTED", "PUBLIC"]).optional().describe("RESTRICTED = solo el creador; PUBLIC = cualquiera con el link"),
+        visibility: z.enum(["RESTRICTED", "PUBLIC"]).optional().describe("PUBLIC = cualquiera con el link; RESTRICTED = solo el creador"),
       },
       annotations: { title: "Actualizar un reporte", readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },

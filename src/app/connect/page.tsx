@@ -97,7 +97,7 @@ export default async function ConnectPage() {
             <li>Ver los comentarios de cada reporte.</li>
             <li>
               <b>Si lo permitís al conectar</b>, también crear y actualizar reportes a tu nombre. Los que cree quedan
-              visibles solo para vos hasta que decidas compartirlos, y no se aceptan scripts ni contenido ejecutable.
+              publicados con su link, y después podés editarlos o hacerlos privados. No se aceptan scripts ni contenido ejecutable.
             </li>
             <li>Nunca borrar reportes ni comentarios.</li>
           </ul>

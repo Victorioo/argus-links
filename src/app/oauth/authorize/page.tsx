@@ -61,7 +61,7 @@ export default async function AuthorizePage({
             <span>
               <b>También crear y actualizar reportes a mi nombre</b>
               <span style={{ display: "block", opacity: 0.75, fontSize: "0.82rem", marginTop: 2 }}>
-                Los reportes que cree quedan registrados a tu nombre y, por defecto, visibles solo para vos.
+                Los reportes que cree quedan registrados a tu nombre y publicados (cualquiera con el link los ve); después podés editarlos o hacerlos privados.
                 Solo podrá actualizar reportes que hayas creado vos.
               </span>
             </span>
