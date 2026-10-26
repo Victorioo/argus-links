@@ -15,7 +15,11 @@ type Item = {
   href: string;
 };
 
-const POLL_MS = 60_000;
+// The bell is a heads-up when you come in, not a live feed: it is loaded when the
+// page opens and when the bell is opened. It is NOT polled in the background,
+// because every query wakes the database and it is billed by the hours it is awake.
+// Coming back to a tab that has been open for a while refreshes it once.
+const STALE_MS = 2 * 60 * 60_000;
 
 function timeAgo(iso: string): string {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -33,8 +37,10 @@ export function NotificationBell() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const [showTour, setShowTour] = useState(false);
+  const lastLoad = useRef(0);
 
   const load = useCallback(async () => {
+    lastLoad.current = Date.now();
     try {
       const res = await fetch("/api/notifications", { cache: "no-store" });
       if (!res.ok) return;
@@ -42,27 +48,20 @@ export function NotificationBell() {
       setItems(data.items);
       setUnread(data.unread);
     } catch {
-      // red caída: se reintenta en el próximo ciclo
+      // red caída: se reintenta al abrir la campanita o al volver a la pestaña
     }
   }, []);
 
   useEffect(() => {
     const first = setTimeout(load, 0);
-    // Do not poll from a tab nobody is looking at: every poll is a database
-    // query, and the database is billed for the hours it stays awake, so a tab
-    // left open overnight would keep it running 24 hours a day.
-    const timer = setInterval(() => {
-      if (!document.hidden) load();
-    }, POLL_MS);
-    // Catch up as soon as the tab is looked at again.
+    // Back on a tab that was left open for a while: refresh once. No timer.
     const onVisible = () => {
-      if (!document.hidden) load();
+      if (!document.hidden && Date.now() - lastLoad.current > STALE_MS) load();
     };
     window.addEventListener("focus", onVisible);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       clearTimeout(first);
-      clearInterval(timer);
       window.removeEventListener("focus", onVisible);
       document.removeEventListener("visibilitychange", onVisible);
     };
